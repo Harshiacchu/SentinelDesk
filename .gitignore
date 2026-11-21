@@ -6,7 +6,7 @@ __pycache__/
 # Large or regenerated files: rebuild with scripts/
 data/raw/*
 data/processed/*
-artifacts/**/*
+artifacts/*/*
 results/*
 !**/.gitkeep
 .pytest_cache/
