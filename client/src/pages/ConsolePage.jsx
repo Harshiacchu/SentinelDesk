@@ -82,6 +82,8 @@ export function ConsolePage() {
           onAction={(action) => mutate(() => api.tickets.act(ticket.data.ticketId, action))}
           onFeedback={(verdict) => mutate(() => api.tickets.feedback(ticket.data.ticketId, verdict))}
           onAddNote={(text) => mutate(() => api.tickets.note(ticket.data.ticketId, text))}
+          onFollowUp={(text) => mutate(() => api.tickets.followUp(ticket.data.ticketId, text)).then(() => incidents.reload({ quiet: true }))}
+          onEditDraft={(text) => mutate(() => api.tickets.editDraft(ticket.data.ticketId, text))}
           onTrackIncident={setTracking}
         />
       )}

@@ -44,6 +44,17 @@ export class TicketService {
     return this.repo.append(id, 'activity', { who: by, what: `Added a note: “${text.slice(0, 60)}”`, at });
   }
 
+  /** The engineer's own wording replaces the AI draft text; the original stays for comparison. */
+  async editDraft(id, { text, by = 'Operator' }) {
+    const t = await this.get(id);
+    if (!t.draft) throw new ValidationError('This ticket has no approved draft to edit');
+    const at = new Date();
+    await this.repo.update(id, { editedDraft: { text, by, at } });
+    const updated = await this.repo.append(id, 'activity', { who: by, what: 'Edited the draft', at });
+    this.events.emit('ticket.updated', TicketService.summary(updated));
+    return updated;
+  }
+
   async act(id, { action, by = 'Operator' }) {
     const spec = ACTIONS[action];
     if (!spec) throw new ValidationError(`action must be one of: ${Object.keys(ACTIONS).join(', ')}`);

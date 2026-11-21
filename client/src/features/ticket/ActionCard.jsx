@@ -42,7 +42,7 @@ export function ActionCard({ ticket, onAction, busy }) {
       )}
 
       <span style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 13 }}>
-        {ticket.draft && <button className="btn-link" onClick={() => navigator.clipboard?.writeText(ticket.draft.lines.filter((l) => !l.unsupported).map((l) => l.text).join(''))}>Copy draft</button>}
+        {ticket.draft && <button className="btn-link" onClick={() => navigator.clipboard?.writeText(ticket.editedDraft?.text ?? ticket.draft.lines.filter((l) => !l.unsupported).map((l) => l.text).join(''))}>Copy draft</button>}
         <button className="btn-link" style={{ marginLeft: 'auto', color: 'var(--muted)' }} aria-expanded={more} onClick={() => setMore((v) => !v)}>
           {more ? 'Less ▴' : 'More ▾'}
         </button>
