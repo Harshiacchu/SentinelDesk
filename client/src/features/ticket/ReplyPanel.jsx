@@ -25,6 +25,9 @@ export function ReplyPanel({ ticket }) {
 
   const totalDraftMs = ticket.latency.find((s) => /draft/i.test(s.stage) && !/check/i.test(s.stage))?.ms;
   const used = precedents.filter((p) => p.cited).length;
+  const LANG = { en: 'English', de: 'German' };
+  const foreign = [...new Set(precedents.filter((p) => p.cited && p.language && p.language !== draft.language).map((p) => p.language))];
+  const crossLingual = foreign.length > 0;
   const hasUnsupported = draft.lines.some((l) => l.unsupported);
   const title = ticket.severity === 'critical' ? 'Holding update' : ticket.severity === 'review' ? 'Safe acknowledgement' : `Reply in ${draft.language === 'de' ? 'German' : 'English'}`;
 
@@ -36,6 +39,11 @@ export function ReplyPanel({ ticket }) {
           <span className="shimmer" style={{ fontSize: 12, fontWeight: 500 }}>
             Drafted from {used} past ticket{used === 1 ? '' : 's'}{totalDraftMs ? ` in ${(totalDraftMs / 1000).toFixed(1)} s` : ''}
           </span>
+          {crossLingual && (
+            <span className="chip tone-info" style={{ alignSelf: 'flex-start', marginTop: 4, fontSize: 11 }}>
+              Cross-lingual · {LANG[draft.language]} reply from {foreign.map((l) => LANG[l] ?? l).join(' + ')} past ticket{used > 1 ? 's' : ''}
+            </span>
+          )}
         </div>
         <button className="pill-toggle press" aria-pressed={lens} onClick={() => setLens((v) => !v)} style={{ marginLeft: 'auto' }}>
           <Icon name="search" size={13} /> Show sources
@@ -60,6 +68,7 @@ export function ReplyPanel({ ticket }) {
           {precedents.map((p, i) => (
             <li key={p.ticketId} style={{ display: 'flex', alignItems: 'baseline', gap: 12, padding: '9px 10px', borderRadius: 10, transition: 'background .2s', background: picked === i ? 'var(--accent-soft)' : 'transparent', opacity: p.cited ? 1 : 0.6 }}>
               <span className="mono" style={{ fontSize: 12, color: 'var(--accent-text)', flex: 'none' }}>[{i + 1}] {p.ticketId}</span>
+              <span className={`chip ${p.language !== draft.language ? 'tone-info' : ''}`} style={{ padding: '0 6px', fontSize: 10, flex: 'none' }}>{(p.language ?? '').toUpperCase()}</span>
               <span style={{ fontSize: 13, color: 'var(--text-2)', flex: 1, minWidth: 0 }}>{p.snippet}</span>
               <span className="mono faint" style={{ fontSize: 12, flex: 'none' }}>{p.similarity}</span>
             </li>

@@ -37,7 +37,7 @@ export function buildDetails(ticket) {
       id: 'evidence', name: 'Evidence', tone: 'info',
       partial: `${ticket.precedents.length} past tickets`, hint: `best match ${ticket.precedents[0]?.similarity ?? '—'}`,
       rows: ticket.precedents.map((p) => ({
-        key: p.ticketId, title: `${p.ticketId}${p.cited ? ' · cited' : ''}`, text: p.snippet, meta: String(p.similarity), tone: p.cited ? 'ready' : 'muted', bar: p.similarity * 100,
+        key: p.ticketId, title: `${p.ticketId} · ${(p.language ?? '').toUpperCase()}${p.language && p.language !== ticket.language ? ' (cross-lingual)' : ''}${p.cited ? ' · cited' : ''}`, text: p.snippet, meta: String(p.similarity), tone: p.cited ? 'ready' : 'muted', bar: p.similarity * 100,
       })),
     },
     {

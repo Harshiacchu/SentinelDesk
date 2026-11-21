@@ -8,14 +8,18 @@ import { TicketService } from '../tickets/TicketService.js';
  * Depends only on abstractions (provider, repository, detector, events).
  */
 export class TriageService {
-  constructor({ provider, repository, factory, burstDetector, events }) {
-    Object.assign(this, { provider, repository, factory, burstDetector, events });
+  constructor({ provider, repository, factory, burstDetector, events, piiMasker }) {
+    Object.assign(this, { provider, repository, factory, burstDetector, events, piiMasker });
   }
 
   async triage(input, { receivedAt = new Date(), silent = false } = {}) {
     if (!input?.body?.trim()) throw new ValidationError('body is required');
-    const result = await this.provider.analyze({ subject: input.subject, body: input.body });
-    let record = this.factory.create({ input, result, receivedAt });
+    // PII guardrail: the AI side only ever receives the masked text.
+    const maskedSubject = this.piiMasker.mask(input.subject ?? '');
+    const maskedBody = this.piiMasker.mask(input.body);
+    const result = await this.provider.analyze({ subject: maskedSubject.text || null, body: maskedBody.text });
+    const entities = mergeEntities(maskedSubject.entities, maskedBody.entities);
+    let record = this.factory.create({ input, result: { ...result, pii: { entities, maskedBody: maskedBody.text } }, receivedAt });
 
     const recent = await this.repository.findSince(this.burstDetector.windowStart(receivedAt));
     const incident = this.burstDetector.detect([...recent, record], receivedAt).find((i) => i.topic === record.topic);
@@ -53,4 +57,10 @@ export class TriageService {
       });
     }
   }
+}
+
+function mergeEntities(a, b) {
+  const counts = {};
+  for (const e of [...a, ...b]) counts[e.type] = (counts[e.type] ?? 0) + e.count;
+  return Object.entries(counts).map(([type, count]) => ({ type, count }));
 }

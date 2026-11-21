@@ -7,6 +7,7 @@ import { FeedbackCard } from './FeedbackCard.jsx';
 import { DetailCards } from './DetailCards.jsx';
 import { DetailDrawer } from './DetailDrawer.jsx';
 import { buildDetails } from './detailModel.js';
+import { PiiNotice } from './PiiNotice.jsx';
 
 /** Composes the one-screen workspace. Owns only UI state; data changes go through callbacks. */
 export function TicketView({ ticket, incident, busy, onAction, onFeedback, onAddNote, onTrackIncident }) {
@@ -16,6 +17,7 @@ export function TicketView({ ticket, incident, busy, onAction, onFeedback, onAdd
   return (
     <>
       <TicketHeader ticket={ticket} />
+      <PiiNotice pii={ticket.pii} />
       <div className="ticket-grid">
         <div className="ticket-left">
           {incident && <OutagePulse incident={incident} onTrack={() => onTrackIncident(incident.key)} />}

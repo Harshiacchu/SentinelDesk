@@ -7,6 +7,7 @@ import { env } from './config/env.js';
 import { createLogger } from './core/logger.js';
 import { EventBus } from './realtime/EventBus.js';
 import { TopicClassifier } from './domain/TopicClassifier.js';
+import { PiiMasker } from './domain/PiiMasker.js';
 import { MockTriageProvider } from './modules/triage/providers/MockTriageProvider.js';
 import { HttpTriageProvider } from './modules/triage/providers/HttpTriageProvider.js';
 import { PipelineResultMapper } from './modules/triage/providers/PipelineResultMapper.js';
@@ -47,7 +48,7 @@ export function buildContainer(config = env) {
   const factory = new TicketFactory();
   const burstDetector = new BurstDetector(config.burst);
   const ticketService = new TicketService({ repository, events });
-  const triageService = new TriageService({ provider, repository, factory, burstDetector, events });
+  const triageService = new TriageService({ provider, repository, factory, burstDetector, events, piiMasker: new PiiMasker() });
 
   return {
     config,

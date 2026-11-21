@@ -18,10 +18,11 @@ export function severityFor(decision, reasons = []) {
   return reasons.some((r) => CRITICAL_CODES.has(r)) ? Severity.CRITICAL : Severity.REVIEW;
 }
 
+/** Wording from the challenge brief: "Auto-Draft Ready" vs "Escalate to On-Call Engineer" (+ human review). */
 const HEADLINES = {
-  critical: 'Escalate now',
-  review: 'Needs a person',
-  ready: 'Ready to send',
+  critical: 'Escalate to On-Call Engineer',
+  review: 'Human Review',
+  ready: 'Auto-Draft Ready',
 };
 
 export const headlineFor = (level) => HEADLINES[level];

@@ -17,6 +17,7 @@ const ticketSchema = new mongoose.Schema(
     status: { type: String, index: true },
     incidentKey: { type: String, default: null },
     reasonDetails: { type: Mixed, default: {} },
+    pii: { type: Mixed, default: null },
     triage: Mixed,
     decision: String,
     reasons: [String],
