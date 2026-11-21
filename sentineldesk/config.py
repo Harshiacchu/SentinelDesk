@@ -8,6 +8,10 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+# macOS: PyTorch (embeddings) and FAISS (retrieval) each ship OpenMP; with several threads the
+# FAISS search crashes the process once torch is loaded. One thread avoids it (search is ~ms anyway).
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+
 try:  # main's config.py loaded .env (the API key for P4); P1's rewrite dropped it
     from dotenv import load_dotenv
 
