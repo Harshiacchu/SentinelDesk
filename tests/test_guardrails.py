@@ -20,7 +20,7 @@ def test_null_subject():
 
 
 def test_pii_masking():
-    out = pii.mask("Mail me at jane.doe@example.com from 10.0.0.12")
+    out = pii.mask("Mail me at jane.doe@example.com from 10.0.0.12")["text"]  # CONTRACT.md section 5: {text, entities}
     assert "[EMAIL]" in out and "[IP]" in out and "example.com" not in out
 
 
