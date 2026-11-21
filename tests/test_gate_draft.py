@@ -858,3 +858,34 @@ def test_ordinary_use_of_the_word_call_is_not_an_offer(monkeypatch):
     for reply in ("Hello. 1. Check the API call in the log [TKT-00011].", "Hello. 1. Look at the call stack [TKT-00011].",
                   "Hello. 1. Restart the client [TKT-00011]. Please let us know how it goes."):
         assert gate.post(good_draft(reply=reply), HITS, "en", "x")["status"] == gate.AUTO, reply
+
+
+def test_case_cleaning_still_works_when_pii_py_rewrites_dataset_placeholders(monkeypatch):
+    """P3's pii.mask turns <name> into [NAME] and <tel_num> into [PHONE] before case cleaning sees them."""
+    from sentineldesk import pii
+
+    def p3_style_mask(text):
+        out = text.replace("<name>", "[NAME]").replace("<tel_num>", "[PHONE]").replace("<acc_num>", "[ACCOUNT]")
+        return {"text": out, "entities": []}
+
+    monkeypatch.setattr(pii, "mask", p3_style_mask)
+    hits = [{**HITS[0], "answer": "Dear <name>, please restart the client. Call us at <tel_num> to book a time. "
+                                  "Your account <acc_num> is fine. Thanks, [Your Name]"}]
+    msg = draft.build_user_message("hi", "en", hits)
+    for leftover in ("<name>", "[NAME]", "<tel_num>", "[PHONE]", "<acc_num>", "[ACCOUNT]", "[Your Name]", "Call us at", "to book a time"):
+        assert leftover not in msg, leftover
+    assert "please restart the client." in msg
+
+
+def test_a_sentence_with_a_masked_contact_detail_is_dropped_from_a_case(monkeypatch):
+    hits = [{**HITS[0], "answer": "Restart the client. Phone us on +49 170 1234567 for help. Then retry."}]
+    msg = draft.build_user_message("hi", "en", hits)
+    assert "Restart the client." in msg and "Then retry." in msg
+    assert "+49" not in msg and "[PHONE]" not in msg and "Phone us on" not in msg
+
+
+def test_reply_with_a_masked_token_is_rejected(monkeypatch):
+    monkeypatch.setattr(gate, "_detect_lang", lambda t: "en")
+    for token in ("[PHONE]", "[NAME]", "[EMAIL]", "[ACCOUNT]"):
+        res = gate.post(good_draft(reply=f"Hello, please contact {token} [TKT-00011]."), HITS, "en", "x")
+        assert "LLM_ERROR" in codes(res) and "placeholder" in res["reasons"][0]["detail"], token

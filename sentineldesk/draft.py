@@ -178,16 +178,28 @@ _LINE_BREAK_TAG = re.compile(r"<br\s*/?>", re.IGNORECASE)
 _SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
 
 
-def _clean_case(text: str) -> str:
-    """Case text from the KB, without template placeholders the model could copy (<name>, <tel_num>, ...).
+_MASK_TOKEN = re.compile(r"\[(?:EMAIL|PHONE|IP|IBAN|CARD|ACCOUNT)\]")
+_NAME_TOKEN = re.compile(r"\[NAME\]")
 
-    A name placeholder is simply removed ("Dear <name>," -> "Dear ,"). Any other placeholder stands for a phone
-    number, account number or link: the whole sentence is dropped, so no broken half-sentence is left behind
-    ("call us at <tel_num> to book a time" must not become "call us at to book a time").
+
+def _drop_sentences_with(text: str, pattern: re.Pattern) -> str:
+    return " ".join(sent for sent in _SENTENCE_END.split(text) if not pattern.search(sent))
+
+
+def _clean_case(text: str) -> str:
+    """Case text from the KB, without placeholders or contact details the model could copy into a reply.
+
+    Order matters. (1) Dataset placeholders are handled on the RAW text, because pii.py rewrites <name> to [NAME] and
+    <tel_num> to [PHONE] and they would no longer be recognised. A name placeholder is removed ("Dear <name>," ->
+    "Dear ,"); a sentence with any other placeholder (phone, account number, link) is dropped whole, so no broken
+    half-sentence is left ("call us at <tel_num> to book a time" must not become "call us at to book a time").
+    (2) PII is masked. (3) A sentence that now holds a masked contact detail is dropped, and [NAME] is removed.
     """
-    text = _NAME_PLACEHOLDER.sub("", _LINE_BREAK_TAG.sub("\n", _clean(text)))
-    kept = [sent for sent in _SENTENCE_END.split(text) if not _TEMPLATE_PLACEHOLDER.search(sent)]
-    return re.sub(r"[ \t]{2,}", " ", " ".join(kept)).strip()
+    text = _NAME_PLACEHOLDER.sub("", _LINE_BREAK_TAG.sub("\n", text or ""))
+    text = _drop_sentences_with(text, _TEMPLATE_PLACEHOLDER)
+    text = _NAME_TOKEN.sub("", _clean(text))
+    text = _drop_sentences_with(text, _MASK_TOKEN)
+    return re.sub(r"[ \t]{2,}", " ", text).strip()
 
 
 def _trim(text: str, limit: int | None) -> str:
