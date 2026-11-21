@@ -1,0 +1,53 @@
+.app { position: relative; z-index: 1; display: flex; min-height: 100vh; min-height: 100dvh; }
+.sidebar {
+  position: sticky; top: 0; height: 100vh; height: 100dvh; width: 268px; flex: none;
+  border-width: 0 1px 0 0; border-radius: 0; padding: 22px 14px; display: flex; flex-direction: column; gap: 18px;
+}
+.brand { display: flex; align-items: center; gap: 10px; padding: 0 6px; font-weight: 800; font-size: 16px; letter-spacing: -0.02em; color: var(--text); }
+.brand-mark { width: 30px; height: 30px; border-radius: 9px; background: linear-gradient(135deg, #3b82f6, #7c3aed); display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 6px 18px rgba(59, 130, 246, 0.4); flex: none; }
+.nav { display: flex; flex-direction: column; gap: 2px; }
+.nav a { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 9px; color: var(--text-2); font-size: 13px; font-weight: 500; }
+.nav a.active { background: var(--accent-soft); color: var(--text); font-weight: 600; }
+.main { flex: 1; min-width: 0; padding: 30px 38px 120px; display: flex; flex-direction: column; gap: 22px; }
+
+.mobile-bar, .nav-scrim, .only-mobile { display: none; }
+
+.ticket-grid { display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-start; }
+.ticket-left { flex: 2 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 20px; }
+.ticket-right { flex: 1 1 260px; max-width: 320px; min-width: 0; display: flex; flex-direction: column; gap: 20px; }
+.details-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+
+.insights-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 18px; }
+.span-12 { grid-column: span 12; } .span-8 { grid-column: span 8; } .span-6 { grid-column: span 6; } .span-4 { grid-column: span 4; }
+
+/* Tablet */
+@media (max-width: 1100px) {
+  .details-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .span-8, .span-6, .span-4 { grid-column: span 12; }
+  .main { padding: 26px 26px 120px; }
+}
+
+/* Phone + small tablet: top bar, slide-out sidebar, single column */
+@media (max-width: 860px) {
+  .mobile-bar {
+    display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 25;
+    padding: 10px 14px; padding-top: max(10px, env(safe-area-inset-top)); border-width: 0 0 1px 0; border-radius: 0;
+  }
+  .only-mobile { display: inline-flex; }
+  .only-desktop { display: none; }
+  .nav-scrim { display: block; position: fixed; inset: 0; z-index: 34; background: var(--scrim); backdrop-filter: blur(3px); }
+  .sidebar {
+    position: fixed; left: 0; top: 0; z-index: 35; width: min(320px, 86vw);
+    background: var(--glass-strong); transform: translateX(-105%); transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
+    padding-top: max(22px, env(safe-area-inset-top)); padding-bottom: max(14px, env(safe-area-inset-bottom));
+  }
+  .sidebar.open { transform: none; box-shadow: 20px 0 60px rgba(0, 0, 0, 0.35); }
+  .main { padding: 18px 14px 110px; gap: 18px; }
+  .details-grid { grid-template-columns: 1fr; }
+  .ticket-right { max-width: none; }
+}
+
+/* Small phones */
+@media (max-width: 420px) {
+  .main h1 { font-size: 26px !important; }
+}

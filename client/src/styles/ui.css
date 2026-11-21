@@ -1,0 +1,65 @@
+/* Reusable component styles. Layout lives in layout.css. */
+.card { border-radius: 20px; padding: 22px; display: flex; flex-direction: column; gap: 14px; }
+.card-sm { border-radius: 16px; padding: 16px 18px; }
+.card-title { margin: 0; font-size: 15px; font-weight: 700; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 16px; border-radius: 11px; border: 1px solid var(--border-strong);
+  background: var(--glass-soft); color: var(--text); font-size: 13px; font-weight: 600;
+}
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary {
+  width: 100%; padding: 14px; border: 0; color: #fff; font-size: 14px; font-weight: 700;
+  background: linear-gradient(135deg, var(--tone, var(--accent)), color-mix(in srgb, var(--tone, var(--accent)) 70%, var(--accent-2)));
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--tone, var(--accent)) 35%, transparent);
+}
+.btn-accent { border: 0; color: #fff; background: linear-gradient(135deg, var(--accent), var(--accent-2)); box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 30%, transparent); }
+.btn-ghost { border-color: transparent; background: transparent; color: var(--muted); padding: 6px 8px; }
+.btn-link { border: 0; background: none; padding: 0; color: var(--accent-text); font-weight: 600; font-size: 13px; }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 999px;
+  font-size: 12px; font-weight: 500; color: var(--tone-text, var(--text-2));
+  background: var(--tone-soft, var(--glass-soft)); border: 1px solid color-mix(in srgb, var(--tone, var(--muted)) 35%, transparent);
+}
+.pill-toggle { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid var(--border-strong); background: var(--glass-soft); color: var(--text-2); }
+.pill-toggle[aria-pressed='true'] { background: var(--accent-soft); color: var(--accent-text); border-color: color-mix(in srgb, var(--accent) 50%, transparent); box-shadow: 0 0 16px var(--accent-soft); }
+
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--tone, var(--faint)); flex: none; }
+.dot-glow { box-shadow: 0 0 10px var(--tone); }
+
+.bar { height: 5px; border-radius: 999px; background: var(--hover); overflow: hidden; }
+.bar > span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), #8b5cf6); transition: width 0.8s cubic-bezier(0.2, 0.7, 0.2, 1); }
+
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.tab { padding: 10px 12px; border: 0; background: transparent; font-size: 13px; color: var(--muted); }
+.tab[aria-selected='true'] { color: var(--text); font-weight: 600; box-shadow: inset 0 -2px 0 var(--accent); }
+
+.seg { display: grid; grid-auto-flow: column; gap: 4px; padding: 4px; border-radius: 11px; background: var(--hover); }
+.seg button { padding: 7px 10px; border: 0; border-radius: 8px; background: transparent; font-size: 12px; font-weight: 600; color: var(--muted); }
+.seg button[aria-pressed='true'] { background: var(--glass-strong); color: var(--text); box-shadow: var(--shadow); }
+
+.scrim { position: fixed; inset: 0; z-index: 40; background: var(--scrim); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); display: flex; }
+.drawer { margin-left: auto; width: 460px; max-width: 100%; height: 100%; border-width: 0 0 0 1px; display: flex; flex-direction: column; }
+.drawer-head { display: flex; align-items: center; gap: 10px; padding: 22px 24px 14px; }
+.icon-btn { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--border-strong); background: var(--glass-soft); font-size: 18px; display: inline-flex; align-items: center; justify-content: center; }
+
+.list { list-style: none; margin: 0; padding: 0; }
+.row { display: flex; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--border); align-items: baseline; }
+.row:last-child { border-bottom: 0; }
+
+.kbd { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); padding: 1px 6px; border-radius: 5px; border: 1px solid var(--border-strong); }
+.empty { padding: 40px 20px; text-align: center; color: var(--muted); }
+.skeleton { border-radius: 10px; background: linear-gradient(90deg, var(--hover), var(--glass-soft), var(--hover)); background-size: 200% 100%; animation: shimmer 1.6s linear infinite; }
+.error-box { padding: 12px 14px; border-radius: 12px; background: var(--red-soft); color: var(--red-text); font-size: 13px; }
+
+@media (max-width: 860px) {
+  .drawer { width: 100% !important; }
+  .icon-btn { width: 40px; height: 40px; }
+  .seg button { padding: 9px 10px; }
+  .card { padding: 18px; border-radius: 18px; }
+}
+@media (hover: none) {
+  .lift:hover { transform: none; }
+}

@@ -62,3 +62,51 @@ _TODO(P1): paste the metrics table here._
 
 ## Dataset
 [Tobi-Bueck/customer-support-tickets](https://huggingface.co/datasets/Tobi-Bueck/customer-support-tickets), CC-BY-NC-4.0.
+
+---
+
+## Operator console (MERN): `client/` + `server/`
+
+A React + Express + MongoDB console on top of the Python pipeline. It runs on its own with placeholder triage, so the UI never waits for the models.
+
+```
+client/   React 18 + Vite: Console, Insights, front page (light + dark, phone → desktop)
+server/   Express API: triage, smart inbox, outages, analytics, chat, live updates (SSE)
+```
+
+### Run
+
+```bash
+cd server && npm install && cp .env.example .env && npm run dev   # http://localhost:4000
+cd client && npm install && npm run dev                           # http://localhost:5173
+```
+
+Defaults need nothing else: `TRIAGE_PROVIDER=mock`, `TICKET_STORE=memory`, and ~120 demo tickets (including a live VPN outage across Berlin, Munich, Hamburg and Frankfurt) are seeded on start.
+
+| Switch (server/.env) | Options | Use |
+|---|---|---|
+| `TRIAGE_PROVIDER` | `mock` / `http` | `http` POSTs `{subject, body}` to `PIPELINE_URL` and expects `PipelineResult` from `sentineldesk/contracts.py` |
+| `TICKET_STORE` | `memory` / `mongo` | `mongo` uses `MONGODB_URI` (local MongoDB or Atlas) |
+| `SEED_DEMO` | `true` / `false` | Demo data on an empty store |
+| `BURST_WINDOW_MIN`, `BURST_MIN_TICKETS` | numbers | Outage = N similar incidents within T minutes |
+
+To plug in the real models, the Python side only needs a small HTTP wrapper around `pipeline.run()` that returns its `PipelineResult` as JSON. `server/src/modules/triage/providers/PipelineResultMapper.js` adapts it, so nothing else changes.
+
+### What the console shows
+- **Smart inbox** sorted by urgency (Needs you / Ready / Done, paginated), live via SSE
+- **Outage banner** when similar incidents cluster, plus a **tracker** listing every similar ticket and the affected branches
+- **One-screen ticket view**: decision card, Apple-style outage rings, draft with an **Evidence lens** (every sentence → its source ticket; unsupported promises struck out), one primary action, "Was the AI right?" feedback
+- **Six detail cards** (Why, Classification, Evidence, Safety checks, Pipeline, Activity & notes): summary on the card, everything in a tabbed drawer
+- **Ask SentinelDesk** chat scoped to the ticket (answers only from stored evidence), **⌘K** quick triage
+- **Insights**: KPIs, outage **location map**, **branch × topic heatmap**, volume, decisions, departments, gate reasons
+
+### Design principles
+- **Ports and adapters:** `TriageProvider` and `TicketRepository` are abstract, with mock/HTTP and memory/Mongo implementations. `server/src/container.js` is the only file that knows concrete classes.
+- **Single responsibility:** routes only parse and validate, services hold use cases, `domain/` holds pure rules (severity, topics), repositories hold storage.
+- **Open/closed:** a new gate reason, chat intent, topic or provider is one entry or class; callers don't change.
+- **Package by feature:** `modules/{triage,tickets,incidents,analytics,chat}` on the server, `features/{inbox,ticket,incidents,insights,chat,composer}` on the client.
+- **Presentational vs container components:** pages fetch and wire, feature components render, `detailModel.js` is pure mapping.
+- **Design tokens:** every colour lives in `client/src/styles/tokens.css`, so light/dark is one attribute switch. Motion respects `prefers-reduced-motion`.
+
+### API
+`POST /api/triage` · `GET /api/tickets?filter&page&limit` · `GET /api/tickets/:id` · `POST /api/tickets/:id/{feedback,notes,actions,chat}` · `GET /api/incidents/active` · `GET /api/incidents/:key` · `GET /api/analytics/overview?hours` · `GET /api/analytics/heatmap?minutes` · `GET /api/events` (SSE) · `GET /api/meta`

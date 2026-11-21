@@ -10,3 +10,7 @@ artifacts/*/*
 results/*
 !**/.gitkeep
 .pytest_cache/
+# MERN console
+node_modules/
+client/dist/
+server/.env
