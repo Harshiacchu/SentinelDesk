@@ -66,7 +66,7 @@ EMBED_FALLBACK = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 
 # --- Thresholds (tuned on val; placeholders) -----------------------------------
 TAU_C = float(os.getenv("SENTINEL_TAU_C", 0.45))       # confidence cutoff (P2)
-TAU_S = float(os.getenv("SENTINEL_TAU_S", 0.80))       # similarity cutoff (P3)
+TAU_S = float(os.getenv("SENTINEL_TAU_S", 0.88))       # similarity cutoff (P3: rejects out-of-scope <0.88 while keeping ADV-19 at 0.887)
 HIGH_INCIDENT_THRESHOLD = float(os.getenv("SENTINEL_HI_THRESHOLD", 0.30))  # (P2)
 
 # --- LLM (P4) --------------------------------------------------------------------
@@ -84,7 +84,7 @@ MODELS_DIR = ARTIFACTS_DIR / "models"
 EMB_DIR = ARTIFACTS_DIR  # P2's scripts write kb_emb.npy and test_emb.npy here = P1's KB_EMB_PATH / TEST_EMB_PATH
 TOP_K = 5
 MIN_CLASSIFIER_CONF = 0.55  # placeholders: P4's gate, to be tuned on val
-MIN_RETRIEVAL_SIM = 0.80
+MIN_RETRIEVAL_SIM = 0.88  # P3: rejects out-of-scope (0.78, 0.82, 0.87) while keeping ADV-19 (0.887)
 BURST_WINDOW_MIN = 15
 BURST_MIN_TICKETS = 3
 BURST_SIM = 0.85

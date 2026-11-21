@@ -15,17 +15,31 @@ _RISKY = re.compile(
 
 def decide(ticket: Ticket, triage: Triage, cases: list[Case]) -> GateResult:
     reasons: list[str] = []
-    if triage["priority"]["label"] == "high" and triage["type"]["label"] == "Incident":
+    if (triage["priority"]["label"] == "high" and triage["type"]["label"] == "Incident") or triage.get("high_incident_flag", False):
         reasons.append("High-priority Incident: page on-call engineer")
-    for head in ("type", "queue", "priority"):
-        conf = triage[head]["confidence"]
-        if conf < config.MIN_CLASSIFIER_CONF:
-            reasons.append(f"Low {head} confidence ({conf:.2f})")
+
     top_sim = cases[0]["similarity"] if cases else 0.0
     if top_sim < config.MIN_RETRIEVAL_SIM:
         reasons.append(f"No close historical precedent (top similarity {top_sim:.2f})")
+
     if _RISKY.search(ticket_text(ticket)):
         reasons.append("Asks for refund, legal, SLA or policy actions, or contains an injection attempt")
+
+    # Confidence check: primary routing decision is queue.
+    # Precedent rescue: if we have an exceptionally close historical precedent (>= 0.94),
+    # RAG grounds safely and can answer even if classifier confidence was borderline.
+    strong_precedent = top_sim >= 0.94
+    if not strong_precedent:
+        queue_conf = triage["queue"]["confidence"]
+        if queue_conf < config.MIN_CLASSIFIER_CONF:
+            reasons.append(f"Low queue confidence ({queue_conf:.2f})")
+        # For type and priority, only escalate if confidence is very low (< 0.40)
+        # to avoid compound escalation on routine tickets where low vs medium is subjective.
+        for head in ("type", "priority"):
+            conf = triage[head]["confidence"]
+            if conf < 0.40:
+                reasons.append(f"Low {head} confidence ({conf:.2f})")
+
     return {"decision": "ESCALATE" if reasons else "AUTO_DRAFT", "reasons": reasons}
 
 
