@@ -71,7 +71,7 @@ A React + Express + MongoDB console on top of the Python pipeline. It runs on it
 
 ```
 client/   React 18 + Vite: Console, Insights, front page (light + dark, phone → desktop)
-server/   Express API: triage, smart inbox, outages, analytics, chat, live updates (SSE)
+server/   Express API: triage, smart inbox, outages, analytics, live updates (SSE)
 ```
 
 ### Run
@@ -106,16 +106,16 @@ Before the models are trained, run the bridge on stubs with `SENTINEL_USE_MOCKS=
 - **Outage banner** when similar incidents cluster, plus a **tracker** listing every similar ticket
 - **One-screen ticket view**: decision card, Apple-style outage rings, draft with an **Evidence lens** (every sentence → its source ticket; unsupported promises struck out), one primary action, "Was the AI right?" feedback
 - **Six detail cards** (Why, Classification, Evidence, Safety checks, Pipeline, Activity & notes): summary on the card, everything in a tabbed drawer
-- **Ask SentinelDesk** chat scoped to the ticket (answers only from stored evidence), **⌘K** quick triage
+- **⌘K** quick triage from anywhere
 - **Insights**: plain-language numbers, a **problem × hour heatmap** that shows when outages spiked, ticket volume, how tickets were handled, most common problems, and why tickets went to an engineer
 
 ### Design principles
 - **Ports and adapters:** `TriageProvider` and `TicketRepository` are abstract, with mock/HTTP and memory/Mongo implementations. `server/src/container.js` is the only file that knows concrete classes.
 - **Single responsibility:** routes only parse and validate, services hold use cases, `domain/` holds pure rules (severity, topics), repositories hold storage.
-- **Open/closed:** a new gate reason, chat intent, topic or provider is one entry or class; callers don't change.
-- **Package by feature:** `modules/{triage,tickets,incidents,analytics,chat}` on the server, `features/{inbox,ticket,incidents,insights,chat,composer}` on the client.
+- **Open/closed:** a new gate reason, topic or provider is one entry or class; callers don't change.
+- **Package by feature:** `modules/{triage,tickets,incidents,analytics}` on the server, `features/{inbox,ticket,incidents,insights,composer}` on the client.
 - **Presentational vs container components:** pages fetch and wire, feature components render, `detailModel.js` is pure mapping.
 - **Design tokens:** every colour lives in `client/src/styles/tokens.css`, so light/dark is one attribute switch. Motion respects `prefers-reduced-motion`.
 
 ### API
-`POST /api/triage` · `GET /api/tickets?filter&page&limit` · `GET /api/tickets/:id` · `POST /api/tickets/:id/{feedback,notes,actions,chat}` · `GET /api/incidents/active` · `GET /api/incidents/:key` · `GET /api/analytics/overview?hours` · `GET /api/analytics/heatmap?minutes` · `GET /api/events` (SSE) · `GET /api/meta`
+`POST /api/triage` · `GET /api/tickets?filter&page&limit` · `GET /api/tickets/:id` · `POST /api/tickets/:id/{feedback,notes,actions}` · `GET /api/incidents/active` · `GET /api/incidents/:key` · `GET /api/analytics/overview?hours` · `GET /api/analytics/heatmap?minutes` · `GET /api/events` (SSE) · `GET /api/meta`

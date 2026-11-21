@@ -17,7 +17,6 @@ export function createApp(c) {
   app.get('/api/meta', (_req, res) => res.json({
     provider: c.config.triageProvider,
     store: c.config.ticketStore,
-    chatSuggestions: c.chatService.suggestions,
   }));
 
   app.use('/api/triage', triageRoutes(c));

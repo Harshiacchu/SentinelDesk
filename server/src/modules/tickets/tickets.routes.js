@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { asyncHandler } from '../../core/http.js';
 import { intInRange, oneOf, requireString } from '../../core/validate.js';
 
-export function ticketRoutes({ ticketService, chatService }) {
+export function ticketRoutes({ ticketService }) {
   const r = Router();
 
   r.get('/', asyncHandler(async (req, res) => {
@@ -25,11 +25,6 @@ export function ticketRoutes({ ticketService, chatService }) {
 
   r.post('/:id/actions', asyncHandler(async (req, res) => {
     res.json(await ticketService.act(req.params.id, { action: req.body?.action }));
-  }));
-
-  r.post('/:id/chat', asyncHandler(async (req, res) => {
-    const question = requireString(req.body?.question, 'question', { max: 500 });
-    res.json(await chatService.answer(req.params.id, question));
   }));
 
   return r;

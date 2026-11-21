@@ -5,19 +5,16 @@ import { InboxPanel } from '../features/inbox/InboxPanel.jsx';
 import { TicketView } from '../features/ticket/TicketView.jsx';
 import { OutageBanner } from '../features/incidents/OutageBanner.jsx';
 import { IncidentDrawer } from '../features/incidents/IncidentDrawer.jsx';
-import { ChatWidget } from '../features/chat/ChatWidget.jsx';
 import { CommandPalette } from '../features/composer/CommandPalette.jsx';
 import { useAsync } from '../hooks/useAsync.js';
 import { useLiveEvents } from '../hooks/useLiveEvents.js';
 import { useHotkey } from '../hooks/useHotkey.js';
-import { useMeta } from '../hooks/useMeta.js';
 import { api } from '../api/sentinelApi.js';
 
 /** Container: owns data fetching and wiring; children are presentational. */
 export function ConsolePage() {
   const { ticketId } = useParams();
   const navigate = useNavigate();
-  const meta = useMeta();
   const [filter, setFilter] = useState('needs');
   const [page, setPage] = useState(1);
   const [palette, setPalette] = useState(false);
@@ -89,7 +86,6 @@ export function ConsolePage() {
         />
       )}
       <IncidentDrawer incidentKey={tracking} onClose={() => setTracking(null)} onOpenTicket={(id) => { setTracking(null); navigate(`/console/${id}`); }} />
-      <ChatWidget ticket={ticket.data} suggestions={meta.chatSuggestions} />
       <CommandPalette open={palette} onClose={() => setPalette(false)} onTriage={triage} />
     </AppShell>
   );

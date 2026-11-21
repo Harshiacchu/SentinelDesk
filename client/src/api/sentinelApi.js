@@ -12,7 +12,6 @@ export const api = {
     feedback: (id, verdict) => request(`/tickets/${encodeURIComponent(id)}/feedback`, { method: 'POST', body: { verdict } }),
     note: (id, text) => request(`/tickets/${encodeURIComponent(id)}/notes`, { method: 'POST', body: { text } }),
     act: (id, action) => request(`/tickets/${encodeURIComponent(id)}/actions`, { method: 'POST', body: { action } }),
-    chat: (id, question) => request(`/tickets/${encodeURIComponent(id)}/chat`, { method: 'POST', body: { question } }),
   },
 
   incidents: {
