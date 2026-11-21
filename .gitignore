@@ -7,6 +7,9 @@ __pycache__/
 data/raw/*
 data/processed/*
 artifacts/*/*
+# P1's config puts the embeddings directly in artifacts/ (not a subfolder), so ignore those too
+artifacts/*.npy
+artifacts/*.json
 results/*
 !**/.gitkeep
 .pytest_cache/
