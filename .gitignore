@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+.ipynb_checkpoints/
+# Large or regenerated files: rebuild with scripts/
+data/raw/*
+data/processed/*
+artifacts/**/*
+results/*
+!**/.gitkeep
+.pytest_cache/
