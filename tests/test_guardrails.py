@@ -87,3 +87,22 @@ def test_refund_request_escalates():
 def test_hallucinated_citation_flagged():
     draft = {"reply": "x", "cited_ticket_ids": ["TKT-99999"], "grounded": True, "unsupported_requests": []}
     assert gate.check_draft(draft, CASES)
+
+
+def test_ambiguous_margin_escalates():
+    ticket = {"subject": "Syncing problem", "body": "My data is not syncing"}
+    # Two competing queues with margin < 0.15 (0.58 vs 0.50) even with conf >= 0.55
+    t = _triage(conf=0.58)
+    t["queue"]["probs"] = {"Technical Support": 0.58, "Product Support": 0.50}
+    res = gate.decide(ticket, t, CASES)
+    assert res["decision"] == "ESCALATE"
+    assert any("Ambiguous queue routing" in r for r in res["reasons"])
+
+
+def test_unsupported_language_escalates():
+    ticket = {"subject": "Problema", "body": "No puedo iniciar sesion en mi cuenta"}
+    t = _triage()
+    t["language"] = "es"  # Spanish: unsupported language
+    res = gate.decide(ticket, t, CASES)
+    assert res["decision"] == "ESCALATE"
+    assert "Unsupported language detected" in res["reasons"][0]

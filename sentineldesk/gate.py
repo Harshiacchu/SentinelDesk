@@ -25,6 +25,10 @@ def decide(ticket: Ticket, triage: Triage, cases: list[Case]) -> GateResult:
     if _RISKY.search(ticket_text(ticket)):
         reasons.append("Asks for refund, legal, SLA or policy actions, or contains an injection attempt")
 
+    lang = triage.get("language")
+    if lang and lang not in config.LANGUAGES:
+        reasons.append(f"Unsupported language detected ({lang})")
+
     # Confidence check: primary routing decision is queue.
     # Precedent rescue: if we have an exceptionally close historical precedent (>= 0.94),
     # RAG grounds safely and can answer even if classifier confidence was borderline.
@@ -33,6 +37,16 @@ def decide(ticket: Ticket, triage: Triage, cases: list[Case]) -> GateResult:
         queue_conf = triage["queue"]["confidence"]
         if queue_conf < config.MIN_CLASSIFIER_CONF:
             reasons.append(f"Low queue confidence ({queue_conf:.2f})")
+
+        # Margin check: if the top two predicted departments are neck-and-neck (margin < 0.15),
+        # the model is torn between ambiguous queues (e.g. Technical Support vs Product Support).
+        queue_probs = triage.get("queue", {}).get("probs", {})
+        if len(queue_probs) >= 2:
+            top2 = sorted(queue_probs.values(), reverse=True)[:2]
+            margin = top2[0] - top2[1]
+            if margin < 0.15:
+                reasons.append(f"Ambiguous queue routing (margin {margin:.2f} < 0.15 between top candidates)")
+
         # For type and priority, only escalate if confidence is very low (< 0.40)
         # to avoid compound escalation on routine tickets where low vs medium is subjective.
         for head in ("type", "priority"):
