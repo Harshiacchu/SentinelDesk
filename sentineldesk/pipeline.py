@@ -14,6 +14,7 @@ def run(ticket: Ticket) -> PipelineResult:
         latency[name] = round((time.perf_counter() - t0) * 1000, 1)
         return out
 
+    # TODO(P5): embed the ticket once here and pass the vector to triage and retrieval.
     language = timed("language", lang.detect, ticket_text(ticket))
     tri = timed("triage", triage.predict, ticket, language)
     cases = timed("retrieval", retrieve.search, ticket)

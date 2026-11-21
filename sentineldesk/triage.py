@@ -10,6 +10,8 @@ def train(kb_df, kb_emb) -> None:
 
     TODO(P2): TF-IDF + LinearSVC baseline, then embeddings + LogisticRegression
     with CalibratedClassifierCV and class_weight='balanced'; tune the 'high' threshold.
+    TODO(P2): fit on the KB minus the validation slice; calibrate and tune on validation only.
+    In scikit-learn >= 1.6, cv="prefit" is deprecated: use CalibratedClassifierCV(FrozenEstimator(model)).
     """
     raise NotImplementedError
 

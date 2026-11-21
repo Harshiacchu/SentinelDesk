@@ -9,6 +9,11 @@ from . import config
 
 def load_raw() -> pd.DataFrame:
     """Download the dataset from Hugging Face and return it as a DataFrame."""
+    # TODO(P1): load the recommended CSV instead (aa_dataset-tickets-multi-lang-5-2-50-version.csv,
+    # 28,587 rows: 4 types, 10 queues, 3 priorities). ds["train"] is 61,765 rows with 52 queue
+    # values, 5 priority values and 13,178 missing types (checked 2026-11-21).
+    # TODO(P1): also save a validation slice (e.g. last 10% of the KB) for tuning thresholds,
+    # and leave `answer` out of test.parquet so test answers never touch disk.
     from datasets import load_dataset
 
     ds = load_dataset(config.DATASET_ID)
