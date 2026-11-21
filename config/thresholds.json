@@ -1,4 +1,8 @@
 {
   "t_high_incident": 0.19,
-  "tau_c": 0.55
+  "tau_c": 0.55,
+  "tau_s": 0.8792,
+  "burst_s": 0.9006,
+  "burst_N": 3,
+  "burst_T_min": 15
 }
