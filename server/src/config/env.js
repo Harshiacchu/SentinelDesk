@@ -20,7 +20,8 @@ export const env = Object.freeze({
   translateApiKey: process.env.GOOGLE_TRANSLATE_API_KEY || '',
   gemini: Object.freeze({
     apiKey: process.env.GEMINI_API_KEY || '',
-    model: process.env.LLM_MODEL || 'gemini-3.5-flash',
+    model: process.env.LLM_MODEL || 'gemini-3-flash-preview',
+    translateModel: process.env.TRANSLATE_MODEL || 'gemini-3.1-flash-lite',
     vertex: ['1', 'true', 'yes'].includes((process.env.GEMINI_USE_VERTEX ?? 'false').toLowerCase()),
   }),
   burst: Object.freeze({

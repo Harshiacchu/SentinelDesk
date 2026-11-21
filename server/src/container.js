@@ -55,7 +55,7 @@ export function buildContainer(config = env) {
   const triageService = new TriageService({ provider, repository, factory, burstDetector, events, piiMasker });
   const translationProvider = pick('translation', config.translateApiKey ? 'google' : config.gemini.apiKey ? 'gemini' : 'off', {
     google: () => new GoogleTranslateProvider({ apiKey: config.translateApiKey }),
-    gemini: () => new GeminiTranslateProvider(config.gemini),
+    gemini: () => new GeminiTranslateProvider({ ...config.gemini, model: config.gemini.translateModel }),
     off: () => new DisabledTranslationProvider(),
   });
 
