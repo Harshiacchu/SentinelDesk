@@ -39,7 +39,33 @@ They were written against the old pipeline shape (`pipeline.run(ticket)`, `decis
 (`pipeline.run(subject, body)`, `timings_ms`) and the new gate shape. The UI should use `gate.LABELS[status]` for the badge text.
 `draft.warmup()` sends one tiny request and never raises.
 
-## Latency settings
+## Defaults and latency settings
 
-`draft.generate(..., opts={...})` accepts `thinking` (`MINIMAL`..`HIGH`), `top_cases`, `answer_chars`, `max_words`, `max_tokens`.
-All default to off. `python -m scripts.bench_draft` compares configs on 15 tickets (EN, DE, adversarial) and writes `results/`.
+Defaults (benchmarked with `python -m scripts.bench_draft`, 15 tickets x 2 runs): `gemini-3.5-flash-lite`, thinking `MINIMAL`,
+reply under 150 words. p50 ~1.2 s, p95 ~1.6-3.4 s, against p50 ~10 s and p95 ~30 s for `gemini-3.5-flash` with its defaults, with the same
+gate pass rate. Trimming the cases (top 3, 700 characters) did not help and is off.
+
+`.env`: `LLM_MODEL`, `LLM_THINKING` (`MINIMAL`..`HIGH`, or `off`), `LLM_MAX_WORDS` (or `0`), `LLM_MAX_TICKET_CHARS`, `LLM_TIMEOUT_S`.
+Per call: `draft.generate(..., opts={...})` accepts `thinking`, `top_cases`, `answer_chars`, `max_words`, `max_tokens` (`False` switches a default off).
+A model that rejects the thinking level is retried once without it. Claude (`LLM_PROVIDER=anthropic`) ignores the word-derived token cap.
+
+## Demo safety net
+
+`cache/demo_drafts.json` holds real drafts for the four sample buttons that pass the gate plus ten real tickets, keyed by language and masked text.
+`OFFLINE=1` serves them with no API key (mode `offline`, 0 ms); a ticket that is not cached escalates with `LLM_ERROR`.
+To add tickets: run them once with `RECORD_DRAFTS=1`. Cached citations only validate if retrieval returns the same hits (same KB and embeddings).
+
+## Inputs that behave differently from normal tickets
+
+- An empty or whitespace-only ticket escalates (`LOW_CONFIDENCE`: no text). The UI should also keep the button disabled.
+- The ticket text sent to the LLM is cut to ~6000 characters, at a word boundary, before masking.
+- A second masking pass in `draft.py` covers compact IBANs, IPv6 addresses and card numbers that `pii.py` misses.
+- Tickets in other languages (French, Spanish, Chinese) are detected as `en`, usually escalate on low confidence; an Arabic one got an English auto-draft.
+
+## Known problems owned by others (found in the end-to-end run)
+
+- `pii.py` (P3): the email pattern `[\w.+-]+@...` is quadratic on long text (20k characters ~0.8 s, 50k ~7 s, 200k > 1 min), so a pasted blob can freeze the
+  pipeline. Bound it, e.g. `[\w.+-]{1,64}@[\w-]{1,255}\.[\w.-]{1,255}`, and cap the ticket length at the pipeline entry. It also misses compact IBANs and IPv6.
+- Similarity threshold (P3): the 0.80 placeholder never fires (real top-1 similarity is 0.92-0.98; out-of-scope tickets score 0.78-0.87).
+- Severity rules (P2): no German security terms (`Sicherheitsproblem`, `Datenverletzung`, `Sicherheitsverletzung`), so a German data-breach ticket was auto-drafted;
+  `offline`, `down`, `Stoerung` flag routine tickets. The sample "I forgot my password" is predicted Incident / high priority and escalates.

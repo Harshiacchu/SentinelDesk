@@ -27,7 +27,7 @@ ESCALATE = "escalate"
 LABELS = {AUTO: "Auto-Draft Ready", ESCALATE: "Escalate to On-Call Engineer"}  # for the UI
 
 _THRESHOLDS_FILE = Path(__file__).resolve().parent.parent / "config" / "thresholds.json"
-_file_cache: dict = {"mtime": None, "data": {}}
+_file_cache: dict = {"key": None, "data": {}}  # key = (path, mtime): a different file never reuses old data
 
 
 def thresholds() -> dict:
@@ -38,10 +38,10 @@ def thresholds() -> dict:
         "t_high_incident": float(getattr(config, "HIGH_INCIDENT_THRESHOLD", 0.5)),
     }
     try:
-        mtime = _THRESHOLDS_FILE.stat().st_mtime
-        if _file_cache["mtime"] != mtime:
+        key = (str(_THRESHOLDS_FILE), _THRESHOLDS_FILE.stat().st_mtime)
+        if _file_cache["key"] != key:
             _file_cache["data"] = json.loads(_THRESHOLDS_FILE.read_text(encoding="utf-8"))
-            _file_cache["mtime"] = mtime
+            _file_cache["key"] = key
         for key in out:
             val = _file_cache["data"].get(key)
             if isinstance(val, (int, float)) and not isinstance(val, bool):
@@ -162,6 +162,9 @@ def pre(triage: dict, hits: list[dict], text: str, lang: str) -> dict:
         triage, hits, text = triage or {}, hits or [], text or ""
         thr = thresholds()
         reasons = []
+
+        if not text.strip():  # nothing to classify or answer (empty or whitespace-only ticket)
+            reasons.append(_r("LOW_CONFIDENCE", "The ticket has no text, so there is nothing to classify or answer."))
 
         m = INJECTION.search(text)
         if m:

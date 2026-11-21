@@ -1,0 +1,103 @@
+{
+ "25751a3fa6ed9fcc03abfa6c97a06cf89a147995a24ddee59cee9900e5b81067": {
+  "reply": "Hello,\n\n1. Please provide your account number, a copy of the invoice, and any additional questions [TKT-02189].\n\nBest regards,",
+  "cited_ids": [
+   "TKT-02189"
+  ],
+  "not_found": false,
+  "stop_reason": "end_turn",
+  "model": "gemini-3.5-flash-lite"
+ },
+ "8ed0d3e67a418058e83e4492121e623ee56c5efaca8569aecce285e4c6c8dc26": {
+  "reply": "Hello,\n\n1. We offer a range of SaaS solutions for scalable project management, including workflow automation and resource allocation tools [TKT-18435].\n2. We would be happy to provide detailed information and discuss how these solutions can meet your specific needs [TKT-18435].\n3. We are available to discuss further at your convenience [TKT-18435].\n\nBest regards,",
+  "cited_ids": [
+   "TKT-18435"
+  ],
+  "not_found": false,
+  "stop_reason": "end_turn",
+  "model": "gemini-3.5-flash-lite"
+ },
+ "ae8058af85348a279a5b8fb0e8cc133513823f9dc0c796481ec19d6211058186": {
+  "reply": "Hello,\n\n1. Please provide your account number and a detailed description of the billing discrepancies you are experiencing.\n2. Please also provide a copy of the incorrect invoice.\n\nBest regards,",
+  "cited_ids": [
+   "TKT-07678"
+  ],
+  "not_found": false,
+  "stop_reason": "end_turn",
+  "model": "gemini-3.5-flash-lite"
+ },
+ "abad2935e0f25ff21d39336d013c6866cf366bcf02ff92f4921a95640f6763d1": {
+  "reply": "Hello,\n\n1. Please provide more details about the problem you are experiencing, any specific error messages, or symptoms [TKT-05299].\n2. Please supply details about the affected products, failure frequency, and the type of support needed [TKT-20317].\n3. Kindly provide your convenient time for a detailed discussion [TKT-22675].\n\nBest regards,",
+  "cited_ids": [
+   "TKT-05299",
+   "TKT-20317",
+   "TKT-22675"
+  ],
+  "not_found": false,
+  "stop_reason": "end_turn",
+  "model": "gemini-3.5-flash-lite"
+ },
+ "20c249f4de5242fc92b393a9a499cd2eb8eb3a06fd79884628c5378f754cbfd7": {
+  "reply": "Hello,\n\nI am investigating the JIRA Software integration issues you are experiencing, particularly with Smartsheet and Figma [TKT-19957]. To better assist you, could you please provide any error messages and details on the steps you have taken so far? Additionally, a call at your convenience could help us work together towards a resolution [TKT-19957].\n\n1. Provide any error messages and details on the steps you have taken so far [TKT-19957].\n2. Schedule a call at your convenience to work towards a resolution [TKT-19957].\n\nBest regards,",
+  "cited_ids": [
+   "TKT-19957"
+  ],
+  "not_found": false,
+  "stop_reason": "end_turn",
+  "model": "gemini-3.5-flash-lite"
+ },
+ "ae69e84a15b88baf5206d1c8e0934052a8b29dd19bf31ff2a4b7a4805b01b2f6": {
+  "reply": "Hello,\n\n1. Please provide details on the recent software updates and integration changes made, as well as any specific error messages you are seeing.\n2. Let us know a suitable time for a call at your convenience so we can discuss and troubleshoot the issue.\n\nBest regards,",
+  "cited_ids": [
+   "TKT-19858"
+  ],
+  "not_found": false,
+  "stop_reason": "end_turn",
+  "model": "gemini-3.5-flash-lite"
+ },
+ "85e6664059daecc5d68cae42a4fc31ded6c4e7f1489ba618f3ee27343c8a9122": {
+  "reply": "Guten Tag,\n\n1. Wir werden die notwendigen API-Dokumentation und Leitfäden zur Verfügung stellen, um eine glatte Integration zu ermöglichen [TKT-22433].\n2. Bitte lassen Sie uns die Anfrage überprüfen und die erforderlichen Informationen senden, einschließlich Authentifizierungsprotokolle und Datenformate [TKT-22433].\n\nMit freundlichen Grüßen",
+  "cited_ids": [
+   "TKT-22433"
+  ],
+  "not_found": false,
+  "stop_reason": "end_turn",
+  "model": "gemini-3.5-flash-lite"
+ },
+ "2d5173a53902784ffc1c9d2c01df94daddb1610af5ede8e4065c985c84b2a1f5": {
+  "reply": "Guten Tag,\n\n1. Bitte geben Sie uns den Fehlercode und die konflikthafte Datenvormate zur Verfügung.\n2. Sie können uns auch anrufen, wenn Sie sich dafür einrichten können.\n\nMit freundlichen Grüßen",
+  "cited_ids": [
+   "TKT-01386"
+  ],
+  "not_found": false,
+  "stop_reason": "end_turn",
+  "model": "gemini-3.5-flash-lite"
+ },
+ "0baa9451a691af7112a4c202ba7e445b8fe0af5b864ba14ed0922040947a5d76": {
+  "reply": "Guten Tag,\n\n1. Wir werden spezielle Experten einsetzen, um die Datenverletzungen zu untersuchen [TKT-22539].\n2. Bitte geben Sie weitere Details zu den durchgeführten Sicherheitsaudits und Software-Updates an, um eine umfassendere Unterstützung und Lösung bereitzustellen [TKT-22539].\n\nVielen Dank.",
+  "cited_ids": [
+   "TKT-22539"
+  ],
+  "not_found": false,
+  "stop_reason": "end_turn",
+  "model": "gemini-3.5-flash-lite"
+ },
+ "53804e32dca735991ae60e76478b2bb6c80e378e085e9ad800908b2bad9991c4": {
+  "reply": "Guten Tag,\n\n1. Zur Verbesserung Ihrer Online-Präsenz empfehle ich die Umsetzung einer Suchmaschinenoptimierungsstrategie, einschließlich Keyword-Recherche, On-Page-Optimierung und Linkbuilding [TKT-12398].\n2. Zusätzlich kann die Nutzung sozialer Plattformen wie Facebook, Twitter und LinkedIn dazu beitragen, die Markenbekanntheit zu steigern und das Engagement zu erhöhen [TKT-12398].\n3. Könnten Sie bitte weitere Informationen zu Ihren aktuellen Marketingaktivitäten bereitstellen und Bereiche nennen, auf die Sie sich konzentrieren möchten? [TKT-12398]\n\nMit freundlichen Grüßen",
+  "cited_ids": [
+   "TKT-12398"
+  ],
+  "not_found": false,
+  "stop_reason": "end_turn",
+  "model": "gemini-3.5-flash-lite"
+ },
+ "d1281fc98353c851073c99f11388e4a66394d9843d5148dafda06b70ebdc6c77": {
+  "reply": "Guten Tag,\n\n1. Wir haben eine E-Mail bezüglich der Probleme mit den digitalen Strategien erhalten und würden gerne einen Anruf vereinbaren, um mögliche Lösungen zu besprechen [TKT-03314].\n2. Bitte teilen Sie mir eine passende Zeit für den Anruf mit [TKT-03314].\n3. Sie können weitere Details zu technischen Störungen und den eingesetzten Taktiken bereitstellen [TKT-03314].\n\nMit freundlichen Grüßen",
+  "cited_ids": [
+   "TKT-03314"
+  ],
+  "not_found": false,
+  "stop_reason": "end_turn",
+  "model": "gemini-3.5-flash-lite"
+ }
+}

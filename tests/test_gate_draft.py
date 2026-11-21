@@ -305,7 +305,7 @@ def test_gemini_gives_up_after_one_retry(use):
 
 
 def test_gemini_other_errors_are_not_retried(use):
-    for code in (400, 404, 500):
+    for code in (404, 500):
         client = use(FakeGemini([gemini_error(code)]))
         out = draft.generate("VPN down", "en", HITS, model=GEMINI)
         assert client.calls == 1 and out["error"] == f"api_error: HTTP {code}"
@@ -504,12 +504,26 @@ def test_thresholds_json_overrides_config_and_tolerates_a_missing_file(tmp_path,
     f = tmp_path / "thresholds.json"
     f.write_text(json.dumps({"tau_s": 0.97, "tau_c": 0.3, "t_high_incident": 0.9}))
     monkeypatch.setattr(gate, "_THRESHOLDS_FILE", f)
-    monkeypatch.setitem(gate._file_cache, "mtime", None)
+    monkeypatch.setitem(gate._file_cache, "key", None)
     assert gate.thresholds() == {"tau_c": 0.3, "tau_s": 0.97, "t_high_incident": 0.9}
     assert "NO_PRECEDENT" in codes(gate.pre(triage(), HITS, "x", "en"))  # top score 0.91 < 0.97
 
     monkeypatch.setattr(gate, "_THRESHOLDS_FILE", tmp_path / "missing.json")
     assert 0 < gate.thresholds()["tau_s"] <= 1
+
+
+def test_threshold_cache_is_not_reused_across_files(tmp_path, monkeypatch):
+    """Regression: a stale cache from one file leaked into the next file with the same mtime."""
+    a, b = tmp_path / "a.json", tmp_path / "b.json"
+    a.write_text(json.dumps({"tau_s": 0.97}))
+    b.write_text(json.dumps({"tau_s": 0.10}))
+    import os
+    os.utime(a, (1_000_000, 1_000_000))
+    os.utime(b, (1_000_000, 1_000_000))  # identical mtimes on purpose
+    monkeypatch.setattr(gate, "_THRESHOLDS_FILE", a)
+    assert gate.thresholds()["tau_s"] == 0.97
+    monkeypatch.setattr(gate, "_THRESHOLDS_FILE", b)
+    assert gate.thresholds()["tau_s"] == 0.10
 
 
 # ---------------------------------------------------------------- draft: contract section 8
@@ -590,7 +604,7 @@ def test_trim_prefers_sentence_end_and_respects_limit():
 def test_options_shape_the_prompt():
     hits = [{"ticket_id": f"TKT-0000{i}", "score": 0.9, "subject": "s", "language": "en",
              "answer_snippet": LONG} for i in range(5)]
-    base = draft.build_user_message("hi", "en", hits)
+    base = draft.build_user_message("hi", "en", hits, {"max_words": False})
     assert base.count("<case ") == 5 and "words" not in base
     small = draft.build_user_message("hi", "en", hits, {"top_cases": 3, "answer_chars": 100, "max_words": 150})
     assert small.count("<case ") == 3 and "Keep the reply under 150 words." in small
@@ -598,19 +612,22 @@ def test_options_shape_the_prompt():
 
 
 def test_word_cap_sets_a_matching_token_limit():
-    assert draft._token_limit(draft._merged({})) == draft.LLM_MAX_TOKENS
-    assert draft._token_limit(draft._merged({"max_words": 150})) == 455
+    assert draft._token_limit(draft._merged({"max_words": False})) == draft.LLM_MAX_TOKENS
+    assert draft._token_limit(draft._merged({})) == 455  # the default is 150 words
+    assert draft._token_limit(draft._merged({"max_words": 100})) == 330
     assert draft._token_limit(draft._merged({"max_words": 150, "max_tokens": 900})) == 900
 
 
 def test_thinking_level_and_token_limit_reach_gemini(use):
     gem = use(FakeGemini([gemini_resp()]))
-    draft.generate("hi", "en", HITS, model=GEMINI)
-    assert gem.kwargs["config"].thinking_config is None  # default: nothing sent, provider default applies
+    draft.generate("hi", "en", HITS, model=GEMINI, opts={"thinking": False, "max_words": False})
+    cfg = gem.kwargs["config"]
+    assert cfg.thinking_config is None and cfg.max_output_tokens == draft.LLM_MAX_TOKENS  # both defaults switched off
 
-    draft.generate("hi", "en", HITS, model=GEMINI, opts={"thinking": "minimal", "max_words": 150})
+    draft.generate("hi", "en", HITS, model=GEMINI)  # the defaults: minimal thinking, 150 words
     cfg = gem.kwargs["config"]
     assert str(cfg.thinking_config.thinking_level).upper().endswith("MINIMAL") and cfg.max_output_tokens == 455
+    assert "Keep the reply under 150 words." in gem.kwargs["contents"]
 
 
 def test_warmup_never_raises_and_skips_in_mock_mode(monkeypatch):
@@ -624,3 +641,107 @@ def test_warmup_never_raises_and_skips_in_mock_mode(monkeypatch):
     monkeypatch.setitem(draft._clients, "gemini", Boom())
     out = draft.warmup("gemini-3.5-flash")
     assert out["ok"] is False and "RuntimeError" in out["note"]
+
+
+def test_llm_prompt_masks_pii_that_pii_py_misses():
+    """pii.py (P3) leaves compact IBANs and IPv6 addresses; draft.py masks them again before any call."""
+    ticket = ("IBAN DE89370400440532013000, spaced DE89 3704 0044 0532 0130 00, "
+              "ipv6 2001:0db8:85a3:0000:0000:8a2e:0370:7334 and fe80::1, card 4111 1111 1111 1111, "
+              "mail jane@example.com, ip 10.0.0.12")
+    msg = draft.build_user_message(ticket, "en", HITS)
+    for secret in ("DE89370400440532013000", "3704 0044", "2001:0db8", "fe80::1", "4111 1111", "jane@example.com", "10.0.0.12"):
+        assert secret not in msg, secret
+
+
+def test_masking_leaves_normal_text_alone():
+    msg = draft.build_user_message("Since 07:30 the VPN (client 4.2) is down; call at 12:30:45, ticket TKT-00011, 24 hours", "en", HITS)
+    for keep in ("07:30", "4.2", "TKT-00011", "24 hours"):
+        assert keep in msg
+
+
+# ---------------------------------------------------------------- the chosen defaults
+
+def test_defaults_are_the_benchmarked_fast_settings():
+    assert draft.DEFAULT_MODELS["gemini"] == "gemini-3.5-flash-lite"
+    assert draft.DEFAULT_OPTS["thinking"] == "MINIMAL" and draft.DEFAULT_OPTS["max_words"] == 150
+    assert draft.DEFAULT_OPTS["top_cases"] is None and draft.DEFAULT_OPTS["answer_chars"] is None  # trimming did not help
+
+
+def test_env_overrides_for_the_defaults(monkeypatch):
+    monkeypatch.setenv("LLM_THINKING", "high")
+    monkeypatch.setenv("LLM_MAX_WORDS", "200")
+    assert draft._env_opt("LLM_THINKING", str, "MINIMAL") == "high" and draft._env_opt("LLM_MAX_WORDS", int, 150) == 200
+    monkeypatch.setenv("LLM_THINKING", "off")
+    monkeypatch.setenv("LLM_MAX_WORDS", "0")
+    assert draft._env_opt("LLM_THINKING", str, "MINIMAL") is None and draft._env_opt("LLM_MAX_WORDS", int, 150) is None
+    monkeypatch.setenv("LLM_MAX_WORDS", "banana")
+    assert draft._env_opt("LLM_MAX_WORDS", int, 150) == 150
+    monkeypatch.delenv("LLM_THINKING")
+    assert draft._env_opt("LLM_THINKING", str, "MINIMAL") == "MINIMAL"
+
+
+def test_model_that_rejects_the_thinking_level_is_retried_without_it(use):
+    client = use(FakeGemini([gemini_error(400), gemini_resp()]))
+    out = draft.generate("VPN down", "en", HITS, model="gemini-3.1-pro-preview")
+    assert client.calls == 2 and out["error"] is None and out["reply"]
+    assert client.kwargs["config"].thinking_config is None
+
+
+def test_a_400_without_a_thinking_setting_is_not_retried(use):
+    client = use(FakeGemini([gemini_error(400)]))
+    out = draft.generate("x", "en", HITS, model=GEMINI, opts={"thinking": False})
+    assert client.calls == 1 and out["error"] == "api_error: HTTP 400"
+
+
+def test_claude_does_not_get_the_word_derived_token_cap(use):
+    client = use(FakeAnthropic(text=GOOD_JSON))
+    draft.generate("x", "en", HITS, model=CLAUDE)
+    assert client.kwargs["max_tokens"] == draft.LLM_MAX_TOKENS  # thinking counts against max_tokens on Claude
+
+
+# ---------------------------------------------------------------- odd inputs
+
+@pytest.mark.parametrize("text", ["", "   ", "\n", " \n\t \n "])
+def test_empty_ticket_escalates_instead_of_auto_drafting(text):
+    res = gate.pre(triage(), HITS, text, "en")
+    assert res["status"] == gate.ESCALATE and "LOW_CONFIDENCE" in codes(res)
+    assert "no text" in res["reasons"][0]["detail"]
+
+
+def test_very_long_ticket_is_cut_before_it_reaches_the_llm():
+    huge = "The export job fails with error code 500. " * 5000
+    msg = draft.build_user_message(huge, "en", HITS)
+    assert len(msg) < draft.MAX_TICKET_CHARS + 3000 and "[...text cut]" in msg
+    one_token = draft.build_user_message("A" * 100_000, "en", HITS)
+    assert len(one_token) < draft.MAX_TICKET_CHARS + 3000
+    short = draft.build_user_message("short ticket", "en", HITS)
+    assert "[...text cut]" not in short and "short ticket" in short
+
+
+def test_numbers_the_customer_wrote_are_not_flagged_even_for_a_cut_ticket(use):
+    use(FakeGemini([gemini_resp(text=json.dumps({"reply": "For port 8443 see [TKT-00011].", "cited_ids": ["TKT-00011"], "not_found": False}))]))
+    out = draft.generate("We use port 8443. " + "filler " * 5000, "en", HITS, model=GEMINI)
+    assert "8443" in out["ticket_text"] and gate.post(out, HITS, "en")["status"] == gate.AUTO
+
+
+def test_gate_and_draft_survive_hostile_text():
+    nasty = ["\\x00\\x07\\x1b[31m", "<script>alert(1)</script>", '{"a": [1,2,3]}', "😀" * 500, "ا" * 300, "你好" * 300, "A" * 200_000]
+    for t in nasty:
+        assert gate.pre(triage(), HITS, t, "en")["status"] in (gate.AUTO, gate.ESCALATE)
+        assert isinstance(draft.build_user_message(t, "en", HITS), str)
+
+
+def test_long_input_is_cut_before_masking_so_a_slow_pii_pattern_cannot_stall_the_draft():
+    import time
+
+    t0 = time.perf_counter()
+    draft.build_user_message("A" * 300_000, "en", HITS)  # pii.py's email pattern alone would need over a minute
+    assert time.perf_counter() - t0 < 2.0
+
+
+def test_cutting_a_long_ticket_never_splits_an_email_or_iban():
+    filler = "word " * 1190  # ~5950 chars, so the cut lands inside the next token
+    for secret in ("jane.doe@example.com", "DE89370400440532013000"):
+        for pad in range(0, 40):
+            msg = draft.build_user_message(filler + "x" * pad + " " + secret + " tail", "en", HITS)
+            assert secret not in msg and "jane.doe@exa" not in msg and "DE893704" not in msg
