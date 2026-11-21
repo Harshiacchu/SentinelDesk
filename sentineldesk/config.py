@@ -8,6 +8,12 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+try:  # load .env so GEMINI_API_KEY etc. reach draft.py, which reads os.environ directly
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:  # python-dotenv is in requirements.txt; tolerate its absence in bare test envs
+    pass
+
 ROOT = Path(__file__).resolve().parent.parent
 
 # --- Data (P1) ---------------------------------------------------------------
@@ -68,3 +74,10 @@ LLM_MODEL = os.getenv("SENTINEL_LLM_MODEL", "claude-opus-5-5")
 # --- Results (P1) ----------------------------------------------------------------
 RESULTS_DIR = ROOT / "results"
 USE_MOCKS = os.getenv("SENTINEL_USE_MOCKS") == "1"
+
+# --- Retrieval + burst (P3) and paths still used by scaffold modules (P5) --------
+TOP_K = 5
+EMB_DIR = ARTIFACTS_DIR / "embeddings"   # scripts/build_index.py
+BURST_WINDOW_MIN = 15                    # burst.py: N similar tickets within T minutes
+BURST_MIN_TICKETS = 3
+BURST_SIM = 0.85
