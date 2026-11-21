@@ -10,7 +10,7 @@ const INTENTS = [
     id: 'why', label: 'Why this decision?',
     match: /why|reason|warum|decision|escalat/i,
     answer: (t) => (t.reasons.length
-      ? `${t.headline}. Checks that fired: ${t.reasons.join(', ')}.`
+      ? `${t.headline}.\n` + t.reasons.map((r) => `• ${r}: ${t.reasonDetails?.[r] ?? 'see Safety checks'}`).join('\n')
       : `${t.headline}. All checks passed and the reply is grounded in ${t.precedents.filter((p) => p.cited).length} past ticket(s).`),
   },
   {

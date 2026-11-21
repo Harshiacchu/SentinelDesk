@@ -1,46 +1,78 @@
 import { GateChecks } from '../../../domain/constants.js';
 
 const CITE = /\[(TKT-\d+)\]/g;
+const STAGE_NAMES = {
+  pii: 'Mask PII', lang: 'Language', embed: 'Embed', retrieve: 'Search', triage: 'Classify',
+  gate_pre: 'Gate', draft: 'Draft', gate_post: 'Check draft',
+};
 
 /**
- * Adapter: converts the Python pipeline's PipelineResult (sentineldesk/contracts.py)
- * into the console's TriageResult. Keeping this in one class means a contract change
- * on the Python side is a one-file change here.
+ * Adapter: Python pipeline.run() result (CONTRACT.md section 9) -> console TriageResult.
+ * Keeping this in one class means a contract change on the Python side is a one-file change here.
+ *
+ * Input: { ticket_id, lang:{lang,source}, pii, triage, hits[], gate:{status, reasons:[{code,detail}]},
+ *          draft:{reply, cited_ids, not_found, stop_reason, error}|null, burst, timings_ms }
  */
 export class PipelineResultMapper {
   constructor({ topicClassifier }) {
     this.topics = topicClassifier;
   }
 
-  toTriageResult(result, text) {
-    const cases = result.cases ?? [];
-    const ids = cases.map((c) => c.ticket_id);
-    const cited = new Set(result.draft?.cited_ticket_ids ?? []);
-    const reasons = (result.gate?.reasons ?? []).map((r) => String(r).split(':')[0].trim().toUpperCase());
+  toTriageResult(r, text) {
+    const hits = r.hits ?? [];
+    const ids = hits.map((h) => h.ticket_id);
+    const cited = new Set(r.draft?.cited_ids ?? []);
+    const { reasons, reasonDetails } = PipelineResultMapper.#reasons(r.gate?.reasons ?? []);
+    if (r.burst?.active && !reasons.includes('BURST')) {
+      reasons.push('BURST');
+      reasonDetails.BURST = `${r.burst.cluster_size} similar tickets arrived in a short window.`;
+    }
 
     return {
-      language: result.triage.language,
+      language: r.lang?.lang ?? r.triage?.language ?? 'en',
       topic: this.topics.classify(text),
-      triage: { type: result.triage.type, queue: result.triage.queue, priority: result.triage.priority },
-      decision: result.gate.decision,
+      triage: {
+        type: PipelineResultMapper.#head(r.triage?.type),
+        queue: PipelineResultMapper.#head(r.triage?.queue),
+        priority: PipelineResultMapper.#head(r.triage?.priority),
+      },
+      decision: r.gate?.status === 'auto_draft' ? 'AUTO_DRAFT' : 'ESCALATE',
       reasons,
-      checks: GateChecks.map((code) => ({ code, passed: !reasons.includes(code) })),
-      precedents: cases.map((c) => ({
-        ticketId: c.ticket_id, similarity: c.similarity, subject: c.subject,
-        snippet: (c.answer ?? '').slice(0, 220), language: c.language, cited: cited.has(c.ticket_id),
+      reasonDetails,
+      checks: [...new Set([...GateChecks, ...reasons.filter((c) => c !== 'BURST')])].map((code) => ({ code, passed: !reasons.includes(code) })),
+      precedents: hits.map((h) => ({
+        ticketId: h.ticket_id, similarity: Number(h.score?.toFixed?.(2) ?? h.score), subject: h.subject,
+        snippet: h.answer_snippet ?? (h.answer ?? '').slice(0, 240), language: h.language, cited: cited.has(h.ticket_id),
       })),
-      draft: result.draft ? { language: result.triage.language, lines: this.#lines(result.draft, ids) } : null,
-      latency: Object.entries(result.latency_ms ?? {}).filter(([k]) => k !== 'total').map(([stage, ms]) => ({ stage, ms })),
+      draft: r.draft?.reply ? { language: r.lang?.lang ?? 'en', lines: PipelineResultMapper.#lines(r.draft.reply, ids) } : null,
+      latency: Object.entries(r.timings_ms ?? {}).filter(([k]) => k !== 'total').map(([k, ms]) => ({ stage: STAGE_NAMES[k] ?? k, ms: Math.round(ms) })),
     };
   }
 
-  #lines(draft, ids) {
-    const sentences = draft.reply.match(/[^.!?]+[.!?]*\s*/g) ?? [draft.reply];
-    const lines = sentences.map((s) => {
+  static #head(h) {
+    return { label: h?.label ?? 'Unknown', confidence: Number(h?.prob ?? h?.confidence ?? 0) };
+  }
+
+  /** Accepts contract reasons [{code, detail}] and legacy "CODE: detail" strings. */
+  static #reasons(raw) {
+    const reasons = [];
+    const reasonDetails = {};
+    for (const item of raw) {
+      const [code, detail] = typeof item === 'string'
+        ? [item.split(':')[0].trim().toUpperCase(), item.split(':').slice(1).join(':').trim()]
+        : [item.code, item.detail];
+      if (!reasons.includes(code)) reasons.push(code);
+      if (detail) reasonDetails[code] = detail;
+    }
+    return { reasons, reasonDetails };
+  }
+
+  static #lines(reply, ids) {
+    const sentences = reply.match(/[^.!?]+[.!?]*\s*/g) ?? [reply];
+    return sentences.map((s) => {
       const ref = [...s.matchAll(CITE)][0]?.[1];
-      return { text: s.replace(CITE, '').replace(/\s+/g, ' '), source: ref ? ids.indexOf(ref) : null, unsupported: false };
+      const idx = ref ? ids.indexOf(ref) : -1;
+      return { text: s.replace(CITE, '').replace(/\s+/g, ' '), source: idx >= 0 ? idx : null, unsupported: false };
     });
-    for (const req of draft.unsupported_requests ?? []) lines.push({ text: `${req} `, source: null, unsupported: true });
-    return lines;
   }
 }

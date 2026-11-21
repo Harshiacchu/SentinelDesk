@@ -18,7 +18,7 @@ export function buildDetails(ticket) {
       id: 'why', name: 'Why', tone: ticket.severity,
       partial: ticket.headline, hint: ticket.reasons.length ? `${ticket.reasons.length} reason${ticket.reasons.length > 1 ? 's' : ''}` : 'all checks passed',
       rows: ticket.reasons.length
-        ? ticket.reasons.map((code) => { const r = reasonInfo(code); return { key: code, title: r.title, text: r.text, meta: code, tone: r.tone.replace('tone-', '') }; })
+        ? ticket.reasons.map((code) => { const r = reasonInfo(code); return { key: code, title: r.title, text: ticket.reasonDetails?.[code] ?? r.text, meta: code, tone: r.tone.replace('tone-', '') }; })
         : [{ key: 'ok', title: 'Safe to send', text: `Every sentence is grounded in ${cited.length} past ticket(s) and no checks fired.`, tone: 'ready' }],
     },
     {
@@ -43,7 +43,7 @@ export function buildDetails(ticket) {
     {
       id: 'checks', name: 'Safety checks', tone: failed.length ? 'critical' : 'ready',
       partial: `${ticket.checks.length - failed.length} of ${ticket.checks.length} passed`, hint: failed.length ? `stopped by ${failed.map((c) => c.code).join(', ')}` : 'nothing stopped it',
-      rows: ticket.checks.map((c) => ({ key: c.code, title: c.code, text: c.passed ? 'Passed' : reasonInfo(c.code).text, meta: c.passed ? 'ok' : 'fail', tone: c.passed ? 'ready' : 'critical' })),
+      rows: ticket.checks.map((c) => ({ key: c.code, title: c.code, text: c.passed ? 'Passed' : ticket.reasonDetails?.[c.code] ?? reasonInfo(c.code).text, meta: c.passed ? 'ok' : 'fail', tone: c.passed ? 'ready' : 'critical' })),
     },
     {
       id: 'pipeline', name: 'Pipeline', tone: 'info',
@@ -55,7 +55,7 @@ export function buildDetails(ticket) {
     },
     {
       id: 'activity', name: 'Activity & notes', tone: 'muted',
-      partial: `${ticket.activity.length} events`, hint: latest ? `latest: ${latest.what.toLowerCase()}` : '',
+      partial: `${ticket.activity.length} event${ticket.activity.length === 1 ? '' : 's'}`, hint: latest ? `latest: ${latest.what.toLowerCase()}` : '',
       rows: [...ticket.activity].reverse().map((a, i) => ({ key: `${i}-${a.at}`, title: a.who, text: a.what, meta: clock(a.at), tone: a.who === 'System' ? 'info' : 'ready' })),
     },
   ];

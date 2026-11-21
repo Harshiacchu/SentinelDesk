@@ -14,7 +14,9 @@ lingua-language-detector>=2.0
 google-genai>=3.6
 anthropic
 python-dotenv>=1.0
-# UI
+# UI / API (P5: api.py bridges the pipeline to the MERN console)
+fastapi>=0.110
+uvicorn>=0.29
 streamlit>=1.35
 # Dev
 pytest>=8.0

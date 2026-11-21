@@ -20,6 +20,7 @@ export const REASONS = {
   UNSUPPORTED_NUMBER: { title: 'Unsupported promise', text: 'The draft contains a number or promise no past ticket supports.', tone: 'tone-critical' },
   LANG_MISMATCH: { title: 'Wrong language', text: 'The reply language differs from the customer’s.', tone: 'tone-review' },
   REFUSAL: { title: 'Model refused', text: 'The language model declined to answer.', tone: 'tone-review' },
+  LLM_ERROR: { title: 'Draft unavailable', text: 'The language model call failed or timed out, so a person takes over.', tone: 'tone-review' },
 };
 
 export const reasonInfo = (code) => REASONS[code] ?? { title: code, text: '', tone: 'tone-muted' };

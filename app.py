@@ -27,32 +27,35 @@ body = st.text_area("Body", key="body", height=160)
 
 if st.button("Triage ticket", type="primary", disabled=not body.strip()):
     with st.spinner("Triaging..."):
-        result = pipeline.run({"subject": subject or None, "body": body})
+        result = pipeline.run(subject or None, body)
 
     tri, gate = result["triage"], result["gate"]
     cols = st.columns(4)
     for col, head in zip(cols, ("type", "queue", "priority")):
-        col.metric(head.title(), tri[head]["label"], f"{tri[head]['confidence']:.0%} conf")
-    cols[3].metric("Language", tri["language"].upper(), f"{result['latency_ms']['total']:.0f} ms total")
+        col.metric(head.title(), tri[head]["label"], f"{tri[head]['prob']:.0%} conf")
+    cols[3].metric("Language", result["lang"]["lang"].upper(), f"{result['timings_ms']['total']:.0f} ms total")
 
-    if gate["decision"] == "AUTO_DRAFT":
+    if gate["status"] == "auto_draft":
         st.success("Auto-Draft Ready")
     else:
         st.error("Escalate to On-Call Engineer")
         for reason in gate["reasons"]:
-            st.write(f"- {reason}")
+            st.write(f"- **{reason['code']}**: {reason['detail']}")
+
+    if result["burst"]["active"]:
+        st.warning(f"Possible outage: {result['burst']['cluster_size']} similar tickets")
 
     st.subheader("Retrieved historical tickets")
     st.dataframe(
-        [{"ticket_id": c["ticket_id"], "similarity": c["similarity"], "language": c["language"],
-          "answer": c["answer"][:200]} for c in result["cases"]],
+        [{"ticket_id": h["ticket_id"], "score": h["score"], "language": h["language"],
+          "answer": h["answer_snippet"]} for h in result["hits"]],
         use_container_width=True,
     )
 
-    if result["draft"]:
+    if result["draft"] and result["draft"].get("reply"):
         st.subheader("Draft reply")
         st.write(result["draft"]["reply"])
-        st.caption("Cites: " + ", ".join(result["draft"]["cited_ticket_ids"]))
+        st.caption("Cites: " + ", ".join(result["draft"].get("cited_ids", [])))
 
     with st.expander("Latency breakdown (ms)"):
-        st.json(result["latency_ms"])
+        st.json(result["timings_ms"])

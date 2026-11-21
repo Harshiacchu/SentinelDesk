@@ -1,3 +1,5 @@
+import { isIncidentLike } from '../../domain/incident.js';
+
 /**
  * Finds outages: several similar incidents (same topic) inside a short window.
  * Pure logic, no I/O, so it is trivial to test and to swap for embedding clustering.
@@ -17,7 +19,7 @@ export class BurstDetector {
     const since = this.windowStart(now);
     const groups = new Map();
     for (const t of tickets) {
-      if (t.triage?.type?.label !== 'Incident' || t.topic === 'Other' || new Date(t.receivedAt) < since) continue;
+      if (!isIncidentLike(t) || t.topic === 'Other' || new Date(t.receivedAt) < since) continue;
       const g = groups.get(t.topic) ?? { key: `INC-${t.topic.toUpperCase()}`, topic: t.topic, tickets: [] };
       g.tickets.push(t);
       groups.set(t.topic, g);

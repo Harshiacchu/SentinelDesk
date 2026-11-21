@@ -90,7 +90,16 @@ Defaults need nothing else: `TRIAGE_PROVIDER=mock`, `TICKET_STORE=memory`, and ~
 | `SEED_DEMO` | `true` / `false` | Demo data on an empty store |
 | `BURST_WINDOW_MIN`, `BURST_MIN_TICKETS` | numbers | Outage = N similar incidents within T minutes |
 
-To plug in the real models, the Python side only needs a small HTTP wrapper around `pipeline.run()` that returns its `PipelineResult` as JSON. `server/src/modules/triage/providers/PipelineResultMapper.js` adapts it, so nothing else changes.
+### Connect the real Python pipeline
+
+```bash
+pip install -r requirements.txt
+uvicorn api:app --port 8000          # api.py: POST /triage -> pipeline.run() (CONTRACT.md section 9)
+# server/.env: TRIAGE_PROVIDER=http  PIPELINE_URL=http://localhost:8000/triage
+```
+
+Before the models are trained, run the bridge on stubs with `SENTINEL_USE_MOCKS=1 OFFLINE=1 uvicorn api:app --port 8000`.
+`server/src/modules/triage/providers/PipelineResultMapper.js` is the only file that knows the Python result shape.
 
 ### What the console shows
 - **Smart inbox** sorted by urgency (Needs you / Ready / Done, paginated), live via SSE

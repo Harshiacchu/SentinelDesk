@@ -10,7 +10,18 @@ export function ReplyPanel({ ticket }) {
   const [lens, setLens] = useState(false);
   const [picked, setPicked] = useState(null);
   const { draft, precedents } = ticket;
-  if (!draft) return null;
+  if (!draft) {
+    return (
+      <section aria-label="Reply" className="glass card rise" style={{ animationDelay: '.14s' }}>
+        <h2 className="card-title">No customer draft</h2>
+        <p className="muted" style={{ margin: 0, lineHeight: 1.6 }}>
+          {ticket.reasons.includes('LLM_ERROR')
+            ? 'The drafting model was unavailable, so this goes to a person. The past tickets are under Evidence.'
+            : 'The safety gate stopped this before drafting, so nothing was written to the customer. A person handles it, with the past tickets under Evidence.'}
+        </p>
+      </section>
+    );
+  }
 
   const totalDraftMs = ticket.latency.find((s) => /draft/i.test(s.stage) && !/check/i.test(s.stage))?.ms;
   const used = precedents.filter((p) => p.cited).length;

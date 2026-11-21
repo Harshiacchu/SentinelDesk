@@ -1,11 +1,11 @@
 import { Chip, Dot, toneClass } from '../../components/ui/Tone.jsx';
 import { LANGUAGE_NAMES, timeAgo } from '../../lib/format.js';
-import { STATUS_LABEL } from '../../lib/severity.js';
+import { STATUS_LABEL, reasonInfo } from '../../lib/severity.js';
 
 export function TicketHeader({ ticket }) {
   const t = ticket.triage;
   const reason = ticket.reasons.length
-    ? ticket.reasons.slice(0, 2).map((r) => r.replaceAll('_', ' ').toLowerCase()).join(' · ')
+    ? ticket.reasons.slice(0, 2).map((r) => reasonInfo(r).title).join(' · ')
     : 'every sentence has a source';
   return (
     <section className="rise" style={{ display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'stretch' }}>

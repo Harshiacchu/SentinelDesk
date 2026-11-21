@@ -1,4 +1,5 @@
 import { BranchSites, Branches } from '../../domain/constants.js';
+import { isIncidentLike } from '../../domain/incident.js';
 
 const pct = (sorted, p) => (sorted.length ? sorted[Math.min(sorted.length - 1, Math.floor(p * sorted.length))] : 0);
 const totalMs = (t) => t.latency.reduce((a, s) => a + s.ms, 0);
@@ -52,7 +53,7 @@ export class AnalyticsService {
   /** Branch x topic grid of incidents in the last N minutes. Hot cells = possible outage at that site. */
   async heatmap({ minutes = 60, now = new Date() } = {}) {
     const since = new Date(now - minutes * 60_000);
-    const incidents = (await this.repo.findSince(since)).filter((t) => t.triage.type.label === 'Incident');
+    const incidents = (await this.repo.findSince(since)).filter(isIncidentLike);
     const topics = this.topics.topics.filter((t) => t !== 'Other');
     const cells = {};
     for (const t of incidents) {
