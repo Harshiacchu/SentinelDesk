@@ -25,21 +25,20 @@ def test_pii_masking():
 
 
 def test_pii_adv20_compact_iban_ipv6_cards():
-    # Compact German IBAN
-    out_iban = pii.mask("Meine IBAN lautet DE89370400440532013000 bitte abbuchen.")
+    # CONTRACT.md section 5: mask() -> {"text", "entities"}; placeholders [EMAIL] [PHONE] [IP] [IBAN] [CARD] [ACCOUNT]
+    out_iban = pii.mask("Meine IBAN lautet DE89370400440532013000 bitte abbuchen.")["text"]
     assert "[IBAN]" in out_iban and "DE89370400440532013000" not in out_iban
 
-    # Spaced IBAN
-    out_iban_sp = pii.mask("IBAN: DE89 3704 0044 0532 0130 00")
-    assert "[IBAN]" in out_iban_sp
+    out_iban_sp = pii.mask("IBAN: DE89 3704 0044 0532 0130 00")["text"]
+    assert "[IBAN]" in out_iban_sp and "3704" not in out_iban_sp
 
-    # Credit card (must mask as [CARD], never [PHONE])
-    out_card = pii.mask("Card number: 4111 2222 3333 4444 or compact 4111222233334444")
-    assert "[CARD]" in out_card and "[PHONE]" not in out_card
+    # A Luhn-valid card number is labelled [CARD], never [PHONE]
+    out_card = pii.mask("Card number: 4111 1111 1111 1111 or compact 4111111111111111")["text"]
+    assert out_card.count("[CARD]") == 2 and "[PHONE]" not in out_card
 
-    # IPv6 addresses
-    out_ipv6 = pii.mask("Connecting from 2001:0db8:85a3:0000:0000:8a2e:0370:7334 or 2001:db8::1 or ::1")
-    assert "[IPV6]" in out_ipv6 and "2001:db8::1" not in out_ipv6
+    # IPv6 is masked as [IP] (one placeholder for IPv4 and IPv6, per the contract)
+    out_ipv6 = pii.mask("Connecting from 2001:0db8:85a3:0000:0000:8a2e:0370:7334 or 2001:db8::1 or ::1")["text"]
+    assert out_ipv6.count("[IP]") == 3 and "2001:db8::1" not in out_ipv6
 
 
 def test_retrieval_similarity_threshold_adv19():

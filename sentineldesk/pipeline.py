@@ -83,15 +83,32 @@ def _hit(h: dict) -> dict:
     }
 
 
-def _retrieve(vec, text: str) -> tuple[list[dict], str | None]:
+POOL_K = 50          # candidates searched before the cross-lingual mix
+CROSS_LINGUAL_K = 2  # at most this many slots go to the other language
+
+
+def _retrieve(vec, text: str, k: int = config.TOP_K) -> tuple[list[dict], str | None]:
     try:
         try:
-            raw = retrieve.search(vec, k=config.TOP_K)  # contract: search(vec, k, exclude_id)
+            raw = retrieve.search(vec, k=k)  # contract: search(vec, k, exclude_id)
         except (TypeError, AttributeError):
             raw = retrieve.search({"subject": None, "body": text}, k=config.TOP_K)  # scaffold: search(ticket, k)
         return [_hit(h) for h in raw or []], None
     except Exception as exc:  # noqa: BLE001
         return [], f"retrieve: {type(exc).__name__}: {exc}"
+
+
+def _cross_lingual(pool: list[dict], lang: str, k: int, min_score: float) -> list[dict]:
+    """Top-k hits, keeping up to CROSS_LINGUAL_K slots for the other language when those cases are
+    genuinely similar (score >= min_score, the gate's tau_s). The multilingual embeddings rank
+    same-language tickets slightly higher, so without this a German ticket rarely sees an English
+    resolution even when one fits (brief, bonus feature: cross-lingual precedent matching)."""
+    same = [h for h in pool if h.get("language") == lang]
+    other = [h for h in pool if h.get("language") and h.get("language") != lang and h["score"] >= min_score][:CROSS_LINGUAL_K]
+    if not other:
+        return pool[:k]
+    mixed = same[: k - len(other)] + other
+    return sorted(mixed, key=lambda h: h["score"], reverse=True)
 
 
 def _language(text: str, hits: list[dict]) -> dict:
@@ -152,11 +169,12 @@ def run(subject=None, body: str | None = None, ticket_id: str | None = None) -> 
     vec, err = timer.run("embed", _embed, text)
     if err:
         errors.append(err)
-    hits, err = timer.run("retrieve", _retrieve, vec, text)
+    pool, err = timer.run("retrieve", _retrieve, vec, text, POOL_K)
     if err:
         errors.append(err)
-    language = timer.run("lang", _language, text, hits)
+    language = timer.run("lang", _language, text, pool[: config.TOP_K])
     lang_code = language["lang"]
+    hits = _cross_lingual(pool, lang_code, config.TOP_K, gate.thresholds()["tau_s"])
 
     tri = timer.run("triage", triage.predict, text, lang_code, vec)
     pre = timer.run("gate_pre", gate.pre, tri, hits, text, lang_code)

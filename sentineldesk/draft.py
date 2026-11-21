@@ -185,9 +185,11 @@ def _clean_case(text: str) -> str:
     number, account number or link: the whole sentence is dropped, so no broken half-sentence is left behind
     ("call us at <tel_num> to book a time" must not become "call us at to book a time").
     """
-    text = _NAME_PLACEHOLDER.sub("", _LINE_BREAK_TAG.sub("\n", _clean(text)))
+    # Drop template sentences BEFORE masking: pii.mask (P3) now turns <tel_num> into [PHONE], after which the
+    # placeholder would no longer be recognisable here. Masking still runs on everything that is kept.
+    text = _NAME_PLACEHOLDER.sub("", _LINE_BREAK_TAG.sub("\n", text or ""))
     kept = [sent for sent in _SENTENCE_END.split(text) if not _TEMPLATE_PLACEHOLDER.search(sent)]
-    return re.sub(r"[ \t]{2,}", " ", " ".join(kept)).strip()
+    return re.sub(r"[ \t]{2,}", " ", _clean(" ".join(kept))).strip()
 
 
 def _trim(text: str, limit: int | None) -> str:
