@@ -23,7 +23,9 @@ export class PipelineResultMapper {
     const ids = hits.map((h) => h.ticket_id);
     const cited = new Set(r.draft?.cited_ids ?? []);
     const { reasons, reasonDetails } = PipelineResultMapper.#reasons(r.gate?.reasons ?? []);
-    if (r.burst?.active && !reasons.includes('BURST')) {
+    // A burst only means an outage when the tickets are incidents (identical refund requests are not an outage).
+    const incidentLike = r.triage?.type?.label === 'Incident' || reasons.includes('HIGH_INCIDENT');
+    if (r.burst?.active && incidentLike && !reasons.includes('BURST')) {
       reasons.push('BURST');
       reasonDetails.BURST = `${r.burst.cluster_size} similar tickets arrived in a short window.`;
     }

@@ -23,4 +23,4 @@ export const GateChecks = Object.freeze([
   'NOT_FOUND', 'BAD_CITATION', 'UNSUPPORTED_NUMBER', 'LANG_MISMATCH', 'REFUSAL',
 ]);
 
-export const TicketStatus = Object.freeze({ OPEN: 'open', SENT: 'sent', ESCALATED: 'escalated', RESOLVED: 'resolved' });
+export const TicketStatus = Object.freeze({ OPEN: 'open', SENT: 'sent', ESCALATED: 'escalated', IN_PROGRESS: 'in_progress', RESOLVED: 'resolved' });

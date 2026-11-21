@@ -8,4 +8,4 @@ export class EventBus extends EventEmitter {
   }
 }
 
-export const LIVE_EVENTS = ['ticket.created', 'ticket.updated', 'incident.updated'];
+export const LIVE_EVENTS = ['ticket.created', 'ticket.updated', 'incident.updated', 'ticket.message'];

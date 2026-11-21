@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../../api/sentinelApi.js';
 import { Icon } from '../../components/ui/Icon.jsx';
+import { filterSuggestions } from '../../lib/autocomplete.js';
+import { SuggestionList, useTypeahead } from '../../components/ui/Typeahead.jsx';
 
 const sparkle = { width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 18px rgba(99,102,241,0.55)', flex: 'none' };
 
@@ -11,9 +13,11 @@ export function ChatWidget({ ticket, suggestions = [] }) {
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const end = useRef(null);
+  const matches = filterSuggestions(text, suggestions, ['label', 'id'], 4);
+  const ta = useTypeahead(matches, (s) => ask(s.label));
 
-  useEffect(() => setMessages([]), [ticket?.ticketId]);
-  useEffect(() => end.current?.scrollIntoView({ behavior: 'smooth' }), [messages]);
+  useEffect(() => { setMessages([]); }, [ticket?.ticketId]);
+  useEffect(() => { end.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
   const ask = async (question) => {
     if (!ticket || !question.trim()) return;
@@ -54,13 +58,14 @@ export function ChatWidget({ ticket, suggestions = [] }) {
             {busy && <span className="shimmer" style={{ fontSize: 12 }}>Looking through the evidence…</span>}
             <span ref={end} />
           </div>
-          {ticket && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '0 18px 12px' }}>
-              {suggestions.map((s) => <button key={s.id} className="btn press" style={{ padding: '6px 11px', borderRadius: 999, fontSize: 12, fontWeight: 500 }} onClick={() => ask(s.label)}>{s.label}</button>)}
-            </div>
-          )}
           <form onSubmit={(e) => { e.preventDefault(); ask(text); }} style={{ display: 'flex', gap: 8, padding: '12px 18px 16px', borderTop: '1px solid var(--border)' }}>
-            <input className="field" aria-label="Ask a question" placeholder="Ask a question…" value={text} onChange={(e) => setText(e.target.value)} disabled={!ticket} />
+            <div style={{ position: 'relative', flex: 1 }}>
+              <input className="field" aria-label="Ask a question" placeholder="Ask why, similar tickets, outage…" value={text}
+                onChange={(e) => { setText(e.target.value); ta.reset(); }} onKeyDown={ta.onKeyDown} onBlur={ta.close} disabled={!ticket}
+                role="combobox" aria-expanded={ta.open} aria-controls="chat-suggestions" aria-autocomplete="list" />
+              <SuggestionList id="chat-suggestions" placement="top" open={ta.open} items={matches} active={ta.active} onPick={(s) => { ask(s.label); ta.close(); }} onHover={ta.setActive}
+                render={(s) => <span style={{ fontSize: 13 }}>{s.label}</span>} />
+            </div>
             <button className="btn btn-accent press" disabled={!ticket || busy || !text.trim()}>Ask</button>
           </form>
         </section>

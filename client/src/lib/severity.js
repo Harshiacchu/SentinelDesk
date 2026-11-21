@@ -5,7 +5,7 @@ export const SEVERITY = {
   ready: { tone: 'tone-ready', label: 'Ready', primary: { action: 'send', label: 'Send reply' }, lock: 'You can undo for 5 seconds after sending.' },
 };
 
-export const STATUS_LABEL = { open: 'Open', sent: 'Sent', escalated: 'Escalated', resolved: 'Resolved' };
+export const STATUS_LABEL = { open: 'Open', sent: 'Sent', escalated: 'Escalated', in_progress: 'With an agent', resolved: 'Resolved' };
 
 /** Plain-English meaning of every gate code. */
 export const REASONS = {
@@ -20,6 +20,7 @@ export const REASONS = {
   UNSUPPORTED_NUMBER: { title: 'Unsupported promise', text: 'The draft contains a number or promise no past ticket supports.', tone: 'tone-critical' },
   LANG_MISMATCH: { title: 'Wrong language', text: 'The reply language differs from the customer’s.', tone: 'tone-review' },
   REFUSAL: { title: 'Model refused', text: 'The language model declined to answer.', tone: 'tone-review' },
+  CUSTOMER_REQUEST: { title: 'Customer asked for a person', text: 'The customer wanted a human after reading the AI answer.', tone: 'tone-review' },
   LLM_ERROR: { title: 'Draft unavailable', text: 'The language model call failed or timed out, so a person takes over.', tone: 'tone-review' },
 };
 

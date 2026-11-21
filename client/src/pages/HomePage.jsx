@@ -37,6 +37,8 @@ export function HomePage() {
           <nav style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 22, fontSize: 14 }}>
             <Link to="/console" style={{ color: 'var(--text-2)' }}>Console</Link>
             <Link to="/insights" style={{ color: 'var(--text-2)' }}>Insights</Link>
+            <Link to="/agent" style={{ color: 'var(--text-2)' }}>Agent portal</Link>
+            <Link to="/support" style={{ color: 'var(--text-2)' }}>Get support</Link>
             <ThemeToggle />
           </nav>
         </header>

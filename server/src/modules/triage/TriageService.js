@@ -2,6 +2,7 @@ import { ValidationError } from '../../core/errors.js';
 import { Branches } from '../../domain/constants.js';
 import { TicketFactory } from '../tickets/TicketFactory.js';
 import { TicketService } from '../tickets/TicketService.js';
+import { openingMessages } from '../../domain/conversation.js';
 
 /**
  * Use case: a new ticket arrives.
@@ -32,6 +33,7 @@ export class TriageService {
       await this.#linkSiblings(incident);
     }
 
+    record = { ...record, messages: openingMessages(record) };
     await this.repository.save(record);
     if (!silent) {
       this.events.emit('ticket.created', TicketService.summary(record));

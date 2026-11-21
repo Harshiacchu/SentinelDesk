@@ -24,7 +24,14 @@ export class TicketService {
   async get(id) {
     const ticket = await this.repo.findById(id);
     if (!ticket) throw new NotFoundError(`Ticket ${id}`);
-    return ticket;
+    return TicketService.withoutSecrets(ticket);
+  }
+
+  /** Operator responses never include the customer's private access key. */
+  static withoutSecrets(t) {
+    if (!t) return t;
+    const { accessKey, ...rest } = t; // eslint-disable-line no-unused-vars
+    return rest;
   }
 
   async addFeedback(id, { verdict, by = 'Operator' }) {
@@ -59,7 +66,7 @@ export class TicketService {
     return {
       ticketId: t.ticketId, receivedAt: t.receivedAt, subject: t.subject, bodyPreview: t.body.slice(0, 90),
       branch: t.branch, language: t.language, topic: t.topic, severity: t.severity, headline: t.headline,
-      status: t.status, incidentKey: t.incidentKey, priority: t.triage?.priority?.label, queue: t.triage?.queue?.label,
+      status: t.status, incidentKey: t.incidentKey, assignee: t.assignee ?? null, priority: t.triage?.priority?.label, queue: t.triage?.queue?.label,
     };
   }
 }

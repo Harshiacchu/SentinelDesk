@@ -18,9 +18,13 @@ export class TicketRepository {
 
 /** Shared filter + sort rules so both implementations behave identically. */
 export const ListRules = {
-  matches(record, filter) {
+  matches(record, filter, { agent } = {}) {
     const done = record.status === 'sent' || record.status === 'resolved';
+    const forAgent = record.severity !== 'ready' || record.status === 'escalated' || record.status === 'in_progress';
     switch (filter) {
+      case 'unclaimed': return !done && forAgent && !record.assignee;
+      case 'mine': return !done && record.assignee === agent;
+      case 'resolved_by_agents': return done && Boolean(record.assignee);
       case 'needs': return !done && record.severity !== 'ready';
       case 'ready': return !done && record.severity === 'ready';
       case 'done': return done;
@@ -28,7 +32,7 @@ export const ListRules = {
     }
   },
   compare(filter) {
-    return filter === 'done'
+    return filter === 'done' || filter === 'resolved_by_agents'
       ? (a, b) => new Date(b.receivedAt) - new Date(a.receivedAt)
       : (a, b) => a.severityRank - b.severityRank || new Date(b.receivedAt) - new Date(a.receivedAt);
   },

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-const EVENTS = ['ticket.created', 'ticket.updated', 'incident.updated'];
+const EVENTS = ['ticket.created', 'ticket.updated', 'incident.updated', 'ticket.message'];
 
 /** Subscribes to the server's SSE feed. The handler always sees the latest closure. */
 export function useLiveEvents(onEvent) {

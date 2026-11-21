@@ -7,6 +7,8 @@ import { ticketRoutes } from './modules/tickets/tickets.routes.js';
 import { incidentRoutes } from './modules/incidents/incidents.routes.js';
 import { analyticsRoutes } from './modules/analytics/analytics.routes.js';
 import { sseRoutes } from './realtime/sse.routes.js';
+import { agentRoutes } from './modules/agent/agent.routes.js';
+import { supportRoutes } from './modules/support/support.routes.js';
 
 /** HTTP layer only: routing + middleware. Business logic lives in the services. */
 export function createApp(c) {
@@ -26,6 +28,8 @@ export function createApp(c) {
   app.use('/api/tickets', ticketRoutes(c));
   app.use('/api/incidents', incidentRoutes(c));
   app.use('/api/analytics', analyticsRoutes(c));
+  app.use('/api/agent', agentRoutes(c));
+  app.use('/api/support', supportRoutes(c));
   app.use('/api/events', sseRoutes(c));
 
   app.use(notFound);

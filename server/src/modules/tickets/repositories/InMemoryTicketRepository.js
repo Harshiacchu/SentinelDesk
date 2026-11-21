@@ -28,8 +28,8 @@ export class InMemoryTicketRepository extends TicketRepository {
     return structuredClone(current);
   }
 
-  async list({ filter = 'all', page = 1, limit = 8 }) {
-    const all = [...this.#byId.values()].filter((r) => ListRules.matches(r, filter)).sort(ListRules.compare(filter));
+  async list({ filter = 'all', page = 1, limit = 8, agent }) {
+    const all = [...this.#byId.values()].filter((r) => ListRules.matches(r, filter, { agent })).sort(ListRules.compare(filter));
     return { items: all.slice((page - 1) * limit, page * limit).map((r) => structuredClone(r)), total: all.length };
   }
 

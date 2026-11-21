@@ -12,7 +12,7 @@ import { AmbientBackground } from './AmbientBackground.jsx';
 export function AppShell({ sidebar, onNewTicket, children }) {
   const [navOpen, setNavOpen] = useState(false);
   const location = useLocation();
-  useEffect(() => setNavOpen(false), [location.pathname]);
+  useEffect(() => { setNavOpen(false); }, [location.pathname]);
 
   const brand = (
     <NavLink to="/" className="brand">
@@ -48,7 +48,9 @@ export function AppShell({ sidebar, onNewTicket, children }) {
           </button>
           <nav className="nav" aria-label="Main">
             <NavLink to="/console"><Icon name="inbox" /> Console</NavLink>
+            <NavLink to="/agent"><Icon name="shield" /> Agent portal</NavLink>
             <NavLink to="/insights"><Icon name="chart" /> Insights</NavLink>
+            <a href="/support" target="_blank" rel="noreferrer"><Icon name="arrow" /> Customer page ↗</a>
           </nav>
           <div className="scroll" style={{ flex: 1, minHeight: 0, margin: '0 -4px', padding: '0 4px' }} onClick={(e) => { if (e.target.closest('button[aria-current], li button')) setNavOpen(false); }}>
             {sidebar}
