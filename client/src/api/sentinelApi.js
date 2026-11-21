@@ -4,6 +4,8 @@ import { request } from './http.js';
 export const api = {
   meta: () => request('/meta'),
 
+  translate: (text, target, source) => request('/translate', { method: 'POST', body: { text, target, source } }),
+
   triage: (ticket) => request('/triage', { method: 'POST', body: ticket }),
 
   tickets: {

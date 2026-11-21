@@ -12,7 +12,7 @@ import { ChangeBanner } from './ChangeBanner.jsx';
 import { HistoryCard } from './HistoryCard.jsx';
 
 /** Composes the one-screen workspace. Owns only UI state; data changes go through callbacks. */
-export function TicketView({ ticket, incident, busy, onAction, onFeedback, onAddNote, onTrackIncident, onFollowUp, onEditDraft }) {
+export function TicketView({ ticket, incident, busy, onAction, onFeedback, onAddNote, onTrackIncident, onFollowUp, onEditDraft, translation }) {
   const [openDetail, setOpenDetail] = useState(null);
   const details = useMemo(() => buildDetails(ticket), [ticket]);
 
@@ -24,8 +24,8 @@ export function TicketView({ ticket, incident, busy, onAction, onFeedback, onAdd
       <div className="ticket-grid">
         <div className="ticket-left">
           {incident && <OutagePulse incident={incident} onTrack={() => onTrackIncident(incident.key)} />}
-          <ReplyPanel key={ticket.ticketId} ticket={ticket} busy={busy} onEditDraft={onEditDraft} />
-          <HistoryCard key={`h-${ticket.ticketId}`} ticket={ticket} busy={busy} onFollowUp={onFollowUp} />
+          <ReplyPanel key={ticket.ticketId} ticket={ticket} busy={busy} onEditDraft={onEditDraft} translation={translation} />
+          <HistoryCard key={`h-${ticket.ticketId}`} ticket={ticket} busy={busy} onFollowUp={onFollowUp} translation={translation} />
         </div>
         <aside className="ticket-right">
           <ActionCard key={ticket.ticketId} ticket={ticket} busy={busy} onAction={onAction} />

@@ -10,10 +10,12 @@ import { useAsync } from '../hooks/useAsync.js';
 import { useLiveEvents } from '../hooks/useLiveEvents.js';
 import { useHotkey } from '../hooks/useHotkey.js';
 import { api } from '../api/sentinelApi.js';
+import { useMeta } from '../hooks/useMeta.js';
 
 /** Container: owns data fetching and wiring; children are presentational. */
 export function ConsolePage() {
   const { ticketId } = useParams();
+  const meta = useMeta();
   const navigate = useNavigate();
   const [filter, setFilter] = useState('needs');
   const [page, setPage] = useState(1);
@@ -84,6 +86,7 @@ export function ConsolePage() {
           onAddNote={(text) => mutate(() => api.tickets.note(ticket.data.ticketId, text))}
           onFollowUp={(text) => mutate(() => api.tickets.followUp(ticket.data.ticketId, text)).then(() => incidents.reload({ quiet: true }))}
           onEditDraft={(text) => mutate(() => api.tickets.editDraft(ticket.data.ticketId, text))}
+          translation={meta.translation}
           onTrackIncident={setTracking}
         />
       )}

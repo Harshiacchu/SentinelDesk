@@ -10,6 +10,7 @@ export const env = Object.freeze({
   ticketStore: process.env.TICKET_STORE || 'memory',
   mongoUri: process.env.MONGODB_URI || '',
   seedDemo: (process.env.SEED_DEMO ?? 'true') === 'true',
+  translateApiKey: process.env.GOOGLE_TRANSLATE_API_KEY || '',
   burst: Object.freeze({
     windowMin: num(process.env.BURST_WINDOW_MIN, 15),
     minTickets: num(process.env.BURST_MIN_TICKETS, 3),

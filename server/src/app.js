@@ -6,6 +6,7 @@ import { ticketRoutes } from './modules/tickets/tickets.routes.js';
 import { incidentRoutes } from './modules/incidents/incidents.routes.js';
 import { analyticsRoutes } from './modules/analytics/analytics.routes.js';
 import { sseRoutes } from './realtime/sse.routes.js';
+import { translationRoutes } from './modules/translation/translation.routes.js';
 
 /** HTTP layer only: routing + middleware. Business logic lives in the services. */
 export function createApp(c) {
@@ -17,12 +18,14 @@ export function createApp(c) {
   app.get('/api/meta', (_req, res) => res.json({
     provider: c.config.triageProvider,
     store: c.config.ticketStore,
+    translation: c.translationService.enabled,
   }));
 
   app.use('/api/triage', triageRoutes(c));
   app.use('/api/tickets', ticketRoutes(c));
   app.use('/api/incidents', incidentRoutes(c));
   app.use('/api/analytics', analyticsRoutes(c));
+  app.use('/api/translate', translationRoutes(c));
   app.use('/api/events', sseRoutes(c));
 
   app.use(notFound);

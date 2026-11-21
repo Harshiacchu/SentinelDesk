@@ -1,11 +1,15 @@
 import { useState } from 'react';
 import { clock } from '../../lib/format.js';
+import { TranslateInline } from '../translation/TranslateInline.jsx';
+
+const looksGerman = (t) => /[äöüß]|\b(der|die|das|und|nicht|seit|bitte|ist|ich|wir|kann)\b/i.test(t);
+
 
 /**
  * The ticket's text over time: the original message plus every follow-up.
  * Adding a follow-up re-runs triage on the whole history.
  */
-export function HistoryCard({ ticket, busy, onFollowUp }) {
+export function HistoryCard({ ticket, busy, onFollowUp, translation }) {
   const [text, setText] = useState('');
   const [error, setError] = useState(null);
   const entries = [{ who: 'Original message', text: ticket.body, at: ticket.receivedAt }, ...(ticket.followups ?? []).map((f) => ({ who: 'Follow-up', text: f.text, at: f.at }))];
@@ -24,6 +28,7 @@ export function HistoryCard({ ticket, busy, onFollowUp }) {
           <li key={i} className="fade" style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <span className="faint" style={{ fontSize: 11 }}>{e.who} · {clock(e.at)}</span>
             <span style={{ fontSize: 14, lineHeight: 1.6, whiteSpace: 'pre-line' }}>{e.text}</span>
+            {looksGerman(e.text) && <TranslateInline text={e.text} target="en" source="de" enabled={translation} />}
           </li>
         ))}
       </ol>

@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Icon } from '../../components/ui/Icon.jsx';
 import { Dot } from '../../components/ui/Tone.jsx';
 import { unsupportedNumbers } from '../../lib/grounding.js';
+import { api } from '../../api/sentinelApi.js';
+import { TranslateInline, translationOffHint } from '../translation/TranslateInline.jsx';
 
 /** Checks that run on a written draft (CONTRACT.md section 6, post stage). */
 const POST_CHECKS = new Set(['NOT_FOUND', 'BAD_CITATION', 'UNSUPPORTED_NUMBER', 'LANG_MISMATCH', 'REFUSAL']);
@@ -10,12 +12,13 @@ const POST_CHECKS = new Set(['NOT_FOUND', 'BAD_CITATION', 'UNSUPPORTED_NUMBER', 
  * The draft with the Evidence Lens: every sentence shows where it came from,
  * unsupported promises are struck out, and clicking a sentence highlights its source.
  */
-export function ReplyPanel({ ticket, busy, onEditDraft }) {
+export function ReplyPanel({ ticket, busy, onEditDraft, translation }) {
   const [lens, setLens] = useState(false);
   const [picked, setPicked] = useState(null);
   const [editing, setEditing] = useState(false);
   const [showOriginal, setShowOriginal] = useState(false);
   const [text, setText] = useState('');
+  const [tr, setTr] = useState({ loading: false, back: null, error: null });
   const { draft, precedents } = ticket;
   if (!draft) {
     return (
@@ -44,7 +47,17 @@ export function ReplyPanel({ ticket, busy, onEditDraft }) {
   const sources = precedents.map((p) => p.snippet);
   const warn = unsupportedNumbers(editing ? text : edited?.text ?? '', sources);
   const startEdit = () => { setText(edited?.text ?? aiText); setEditing(true); };
-  const save = async () => { await onEditDraft(text.trim()); setEditing(false); setShowOriginal(false); };
+  const save = async () => { await onEditDraft(text.trim()); setEditing(false); setShowOriginal(false); setTr({ loading: false, back: null, error: null }); };
+  /** Engineer writes in English -> German for the customer, plus a back-translation to check the meaning. */
+  const toGerman = async () => {
+    setTr({ loading: true, back: null, error: null });
+    try {
+      const de = await api.translate(text, 'de', 'en');
+      const back = await api.translate(de.text, 'en', 'de');
+      setText(de.text);
+      setTr({ loading: false, back: back.text, error: null });
+    } catch (err) { setTr({ loading: false, back: null, error: err.message }); }
+  };
 
   return (
     <section aria-label="Reply" className="glass card rise" style={{ animationDelay: '.14s' }}>
@@ -74,6 +87,16 @@ export function ReplyPanel({ ticket, busy, onEditDraft }) {
         <div className="fade" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <textarea className="field" rows={6} value={text} onChange={(e) => setText(e.target.value)} lang={draft.language} aria-label="Edit reply" style={{ resize: 'vertical', fontSize: 15, lineHeight: 1.6 }} />
           {warn.length > 0 && <Warning items={warn} />}
+          {draft.language === 'de' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <button type="button" className="btn press" onClick={toGerman} disabled={!translation || tr.loading || !text.trim()} title={translation ? '' : translationOffHint} style={{ alignSelf: 'flex-start' }}>
+                {tr.loading ? 'Translating…' : 'Translate my text to German'}
+              </button>
+              {tr.back && <span className="fade" style={{ fontSize: 13, color: 'var(--text-2)' }}><span className="muted">Back to English, to check the meaning:</span> {tr.back}</span>}
+              {tr.error && <span style={{ fontSize: 13, color: 'var(--red-text)' }}>{tr.error}</span>}
+              {!translation && <span className="faint" style={{ fontSize: 12 }}>{translationOffHint}</span>}
+            </div>
+          )}
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
             <button className="btn press" onClick={() => setEditing(false)}>Cancel</button>
             <button className="btn btn-accent press" disabled={busy || !text.trim()} onClick={save}>{busy ? 'Saving…' : 'Save'}</button>
@@ -89,6 +112,7 @@ export function ReplyPanel({ ticket, busy, onEditDraft }) {
           </span>
           <p style={{ margin: 0, fontSize: 17, lineHeight: 1.85, whiteSpace: 'pre-line' }} lang={draft.language}>{edited.text}</p>
           {warn.length > 0 && <Warning items={warn} />}
+          {draft.language === 'de' && <TranslateInline key={edited.text} text={edited.text} target="en" source="de" enabled={translation} />}
         </div>
       )}
 
@@ -119,6 +143,7 @@ export function ReplyPanel({ ticket, busy, onEditDraft }) {
           ))}
         </ul>
       )}
+      {draft.language === 'de' && !edited && <TranslateInline text={aiText} target="en" source="de" enabled={translation} />}
       </>)}
     </section>
   );

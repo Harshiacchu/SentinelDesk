@@ -20,6 +20,9 @@ import { BurstDetector } from './modules/incidents/BurstDetector.js';
 import { IncidentService } from './modules/incidents/IncidentService.js';
 import { AnalyticsService } from './modules/analytics/AnalyticsService.js';
 import { DemoSeeder } from './seed/DemoSeeder.js';
+import { TranslationService } from './modules/translation/TranslationService.js';
+import { GoogleTranslateProvider } from './modules/translation/GoogleTranslateProvider.js';
+import { DisabledTranslationProvider } from './modules/translation/DisabledTranslationProvider.js';
 
 const log = createLogger('container');
 
@@ -47,7 +50,10 @@ export function buildContainer(config = env) {
   const factory = new TicketFactory();
   const burstDetector = new BurstDetector(config.burst);
   const ticketService = new TicketService({ repository, events });
-  const triageService = new TriageService({ provider, repository, factory, burstDetector, events, piiMasker: new PiiMasker() });
+  const piiMasker = new PiiMasker();
+  const triageService = new TriageService({ provider, repository, factory, burstDetector, events, piiMasker });
+  const translationProvider = config.translateApiKey ? new GoogleTranslateProvider({ apiKey: config.translateApiKey }) : new DisabledTranslationProvider();
+  log.info(`translation → ${config.translateApiKey ? 'google' : 'off (no GOOGLE_TRANSLATE_API_KEY)'}`);
 
   return {
     config,
@@ -59,5 +65,6 @@ export function buildContainer(config = env) {
     incidentService: new IncidentService({ repository, burstDetector }),
     analyticsService: new AnalyticsService({ repository, topicClassifier, burstDetector }),
     seeder: new DemoSeeder({ triageService, ticketService, repository }),
+    translationService: new TranslationService({ provider: translationProvider, piiMasker }),
   };
 }
