@@ -1,6 +1,7 @@
 import { Chip, Dot, toneClass } from '../../components/ui/Tone.jsx';
 import { LANGUAGE_NAMES, timeAgo } from '../../lib/format.js';
 import { STATUS_LABEL, reasonInfo } from '../../lib/severity.js';
+import { TriageStrip } from './TriageStrip.jsx';
 
 /** A readable title from the message itself (people type the problem, not a subject line). */
 const titleFrom = (body) => {
@@ -9,7 +10,6 @@ const titleFrom = (body) => {
 };
 
 export function TicketHeader({ ticket }) {
-  const t = ticket.triage;
   const reason = ticket.reasons.length
     ? ticket.reasons.slice(0, 2).map((r) => reasonInfo(r).title).join(' · ')
     : 'every sentence has a source';
@@ -22,12 +22,8 @@ export function TicketHeader({ ticket }) {
         <h1 className="title-grad" style={{ margin: 0, fontSize: 32, fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.15 }}>
           {ticket.subject || titleFrom(ticket.body)}
         </h1>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-          <Chip>{t.type.label}</Chip>
-          <Chip>{t.queue.label}</Chip>
-          <Chip>{t.priority.label} priority</Chip>
-          {ticket.status !== 'open' && <Chip tone="info">{STATUS_LABEL[ticket.status]}</Chip>}
-        </div>
+        <TriageStrip ticket={ticket} />
+        {ticket.status !== 'open' && <span><Chip tone="info">{STATUS_LABEL[ticket.status]}</Chip></span>}
       </div>
       <div className={`glass ${toneClass(ticket.severity)} ${ticket.severity === 'ready' ? 'glow-still' : 'glow'}`}
         style={{ flex: '1 1 280px', maxWidth: 360, padding: '20px 22px', borderRadius: 18, display: 'flex', flexDirection: 'column', gap: 6, borderColor: 'transparent' }}>

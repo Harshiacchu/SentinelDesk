@@ -20,6 +20,13 @@
 .insights-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 18px; }
 .span-12 { grid-column: span 12; } .span-8 { grid-column: span 8; } .span-6 { grid-column: span 6; } .span-4 { grid-column: span 4; }
 
+/* Top past tickets table */
+.prec-row { grid-template-columns: 28px 120px 110px minmax(0, 1fr); }
+@media (max-width: 620px) {
+  .prec-row { grid-template-columns: 28px 1fr 90px; }
+  .prec-row .prec-snippet { grid-column: 2 / -1; }
+}
+
 /* Tablet */
 @media (max-width: 1100px) {
   .details-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -44,7 +51,7 @@
   .sidebar.open { transform: none; box-shadow: 20px 0 60px rgba(0, 0, 0, 0.35); }
   .main { padding: 18px 14px 110px; gap: 18px; }
   .details-grid { grid-template-columns: 1fr; }
-  .ticket-right { max-width: none; }
+  .ticket-right { max-width: none; order: -1; } /* phones: the action button comes right after the decision */
 }
 
 /* Small phones */

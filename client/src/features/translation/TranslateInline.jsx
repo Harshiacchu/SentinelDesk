@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { api } from '../../api/sentinelApi.js';
 
 const NAMES = { en: 'English', de: 'German' };
-const OFF_HINT = 'Translation needs a Google Cloud Translation key (GOOGLE_TRANSLATE_API_KEY in server/.env)';
+const OFF_HINT = 'Translation needs a Gemini key (GEMINI_API_KEY) or a Google Cloud Translation key';
 
 /** "Show in English" under a piece of text. Fetches on demand; never shows made-up text. */
 export function TranslateInline({ text, target = 'en', source, enabled }) {
@@ -32,7 +32,7 @@ export function TranslateInline({ text, target = 'en', source, enabled }) {
           {state.error && <span style={{ fontSize: 13, color: 'var(--red-text)' }}>{state.error}</span>}
           {state.text && (
             <>
-              <span className="faint" style={{ display: 'block', fontSize: 11, marginBottom: 4 }}>{NAMES[target]} · Google Cloud Translation</span>
+              <span className="faint" style={{ display: 'block', fontSize: 11, marginBottom: 4 }}>{NAMES[target]} · machine translation</span>
               <span lang={target} style={{ fontSize: 14, lineHeight: 1.6, whiteSpace: 'pre-line' }}>{state.text}</span>
             </>
           )}

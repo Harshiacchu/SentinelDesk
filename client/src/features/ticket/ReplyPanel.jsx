@@ -12,9 +12,8 @@ const POST_CHECKS = new Set(['NOT_FOUND', 'BAD_CITATION', 'UNSUPPORTED_NUMBER', 
  * The draft with the Evidence Lens: every sentence shows where it came from,
  * unsupported promises are struck out, and clicking a sentence highlights its source.
  */
-export function ReplyPanel({ ticket, busy, onEditDraft, translation }) {
+export function ReplyPanel({ ticket, busy, onEditDraft, translation, picked, onPick }) {
   const [lens, setLens] = useState(false);
-  const [picked, setPicked] = useState(null);
   const [editing, setEditing] = useState(false);
   const [showOriginal, setShowOriginal] = useState(false);
   const [text, setText] = useState('');
@@ -121,7 +120,7 @@ export function ReplyPanel({ ticket, busy, onEditDraft, translation }) {
       <p style={{ margin: 0, fontSize: 17, lineHeight: 1.85 }} lang={draft.language}>
         {draft.lines.map((line, i) => (
           <Sentence key={i} line={line} lens={lens} picked={picked === line.source && line.source !== null}
-            onPick={() => { if (line.source !== null) { setPicked(line.source); setLens(true); } }} />
+            onPick={() => { if (line.source !== null) { onPick(line.source); setLens(true); } }} />
         ))}
       </p>
 
@@ -131,18 +130,6 @@ export function ReplyPanel({ ticket, busy, onEditDraft, translation }) {
         </span>
       )}
 
-      {lens && (
-        <ul className="list fade" style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
-          {precedents.map((p, i) => (
-            <li key={p.ticketId} style={{ display: 'flex', alignItems: 'baseline', gap: 12, padding: '9px 10px', borderRadius: 10, transition: 'background .2s', background: picked === i ? 'var(--accent-soft)' : 'transparent', opacity: p.cited ? 1 : 0.6 }}>
-              <span className="mono" style={{ fontSize: 12, color: 'var(--accent-text)', flex: 'none' }}>[{i + 1}] {p.ticketId}</span>
-              <span className={`chip ${p.language !== draft.language ? 'tone-info' : ''}`} style={{ padding: '0 6px', fontSize: 10, flex: 'none' }}>{(p.language ?? '').toUpperCase()}</span>
-              <span style={{ fontSize: 13, color: 'var(--text-2)', flex: 1, minWidth: 0 }}>{p.snippet}</span>
-              <span className="mono faint" style={{ fontSize: 12, flex: 'none' }}>{p.similarity}</span>
-            </li>
-          ))}
-        </ul>
-      )}
       {draft.language === 'de' && !edited && <TranslateInline text={aiText} target="en" source="de" enabled={translation} />}
       </>)}
     </section>

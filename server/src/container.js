@@ -23,6 +23,7 @@ import { DemoSeeder } from './seed/DemoSeeder.js';
 import { TranslationService } from './modules/translation/TranslationService.js';
 import { GoogleTranslateProvider } from './modules/translation/GoogleTranslateProvider.js';
 import { DisabledTranslationProvider } from './modules/translation/DisabledTranslationProvider.js';
+import { GeminiTranslateProvider } from './modules/translation/GeminiTranslateProvider.js';
 
 const log = createLogger('container');
 
@@ -52,8 +53,11 @@ export function buildContainer(config = env) {
   const ticketService = new TicketService({ repository, events });
   const piiMasker = new PiiMasker();
   const triageService = new TriageService({ provider, repository, factory, burstDetector, events, piiMasker });
-  const translationProvider = config.translateApiKey ? new GoogleTranslateProvider({ apiKey: config.translateApiKey }) : new DisabledTranslationProvider();
-  log.info(`translation → ${config.translateApiKey ? 'google' : 'off (no GOOGLE_TRANSLATE_API_KEY)'}`);
+  const translationProvider = pick('translation', config.translateApiKey ? 'google' : config.gemini.apiKey ? 'gemini' : 'off', {
+    google: () => new GoogleTranslateProvider({ apiKey: config.translateApiKey }),
+    gemini: () => new GeminiTranslateProvider(config.gemini),
+    off: () => new DisabledTranslationProvider(),
+  });
 
   return {
     config,
