@@ -78,8 +78,12 @@ server/   Express API: triage, smart inbox, outages, analytics, chat, live updat
 
 ```bash
 cd server && npm install && cp .env.example .env && npm run dev   # http://localhost:4000
-cd client && npm install && npm run dev                           # http://localhost:5173
+cd client && npm install && npm run dev                           # operator app: http://localhost:5173
+cd client && npm run dev:support                                  # customer app: http://localhost:5174/support
 ```
+
+The operator app (Console, Agent portal, Insights) and the customer support app are separate
+entries with separate ports and builds (`dist/`, `dist-support/`), so both can run side by side.
 
 Defaults need nothing else: `TRIAGE_PROVIDER=mock`, `TICKET_STORE=memory`, and ~120 demo tickets (including a live VPN outage across Berlin, Munich, Hamburg and Frankfurt) are seeded on start.
 

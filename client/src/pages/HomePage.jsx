@@ -7,6 +7,7 @@ import { TicketComposer } from '../features/composer/TicketComposer.jsx';
 import { useAsync } from '../hooks/useAsync.js';
 import { useMeta } from '../hooks/useMeta.js';
 import { api } from '../api/sentinelApi.js';
+import { SUPPORT_URL } from '../lib/links.js';
 
 const STEPS = [
   ['01', 'Read', 'Detects English or German and hides emails, phones and IPs first.'],
@@ -38,7 +39,7 @@ export function HomePage() {
             <Link to="/console" style={{ color: 'var(--text-2)' }}>Console</Link>
             <Link to="/insights" style={{ color: 'var(--text-2)' }}>Insights</Link>
             <Link to="/agent" style={{ color: 'var(--text-2)' }}>Agent portal</Link>
-            <Link to="/support" style={{ color: 'var(--text-2)' }}>Get support</Link>
+            <a href={SUPPORT_URL} target="_blank" rel="noreferrer" style={{ color: 'var(--text-2)' }}>Customer site ↗</a>
             <ThemeToggle />
           </nav>
         </header>

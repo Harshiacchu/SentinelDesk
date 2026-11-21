@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "dev:support": "vite --config vite.support.config.js",
+    "build": "vite build && vite build --config vite.support.config.js",
+    "preview": "vite preview",
+    "preview:support": "vite preview --config vite.support.config.js"
   },
   "dependencies": {
     "react": "18.3.1",
