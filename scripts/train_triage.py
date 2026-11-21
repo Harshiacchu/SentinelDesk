@@ -5,6 +5,7 @@ Usage: python -m scripts.train_triage [--skip-embed]
 Writes:
   artifacts/embeddings/kb_emb.npy    (n_kb, 768) float32, row i = kb.parquet row i  -> P3
   artifacts/embeddings/test_emb.npy  (n_test, 768) float32, test.parquet row order -> P1
+  artifacts/embeddings/*.manifest.json  ticket IDs + text fingerprints; use embed.load_checked()
   artifacts/embeddings/embed_meta.json
   artifacts/models/triage.joblib
   results/val_triage.json            validation scores, chosen models, thresholds, tau_c curve
@@ -43,14 +44,22 @@ def main() -> None:
     config.EMB_DIR.mkdir(parents=True, exist_ok=True)
     kb_path, test_path = config.EMB_DIR / "kb_emb.npy", config.EMB_DIR / "test_emb.npy"
 
-    if args.skip_embed and kb_path.exists():
-        kb_emb = np.load(kb_path)
-    else:
-        kb_emb = _embed_all([ticket_text({"subject": s, "body": b}) for s, b in zip(kb["subject"], kb["body"])], "KB")
-        np.save(kb_path, kb_emb)
-        test_in = data.load_test_inputs()
-        np.save(test_path, _embed_all([ticket_text({"subject": s, "body": b})
-                                       for s, b in zip(test_in["subject"], test_in["body"])], "test"))
+    kb_texts = [ticket_text({"subject": s, "body": b}) for s, b in zip(kb["subject"], kb["body"])]
+    test_in = data.load_test_inputs()
+    test_texts = [ticket_text({"subject": s, "body": b}) for s, b in zip(test_in["subject"], test_in["body"])]
+    kb_emb = None
+    if args.skip_embed:
+        try:
+            kb_emb = embed.load_checked(kb_path, kb["ticket_id"].tolist(), kb_texts)
+            embed.load_checked(test_path, test_in["ticket_id"].tolist(), test_texts)
+            print("Reusing embeddings: manifests match kb.parquet and test.parquet")
+        except (ValueError, FileNotFoundError) as exc:
+            print(f"Cannot reuse embeddings ({exc}); re-embedding")
+            kb_emb = None
+    if kb_emb is None:
+        kb_emb = _embed_all(kb_texts, "KB")
+        embed.save_with_manifest(kb_path, kb_emb, kb["ticket_id"].tolist(), kb_texts)
+        embed.save_with_manifest(test_path, _embed_all(test_texts, "test"), test_in["ticket_id"].tolist(), test_texts)
         (config.EMB_DIR / "embed_meta.json").write_text(json.dumps(
             {"model": config.EMBED_MODEL, "dim": int(kb_emb.shape[1]), "prefix": "query: ", "normalised": True}))
 

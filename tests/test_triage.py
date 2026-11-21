@@ -68,3 +68,19 @@ def test_latency_under_100ms_excluding_embedding(monkeypatch):
     for _ in range(20):
         triage.predict(ROUTINE, "en", vec=vec)
     assert (time.perf_counter() - t0) / 20 < 0.100
+
+
+def test_load_checked_refuses_mismatched_embeddings(tmp_path):
+    from sentineldesk import embed
+
+    texts, ids = ["a\nb", "c\nd", "e\nf"], ["TKT-00000", "TKT-00001", "TKT-00002"]
+    emb = np.eye(3, 768, dtype=np.float32)
+    path = tmp_path / "kb_emb.npy"
+    embed.save_with_manifest(path, emb, ids, texts)
+    assert embed.load_checked(path, ids, texts).shape == (3, 768)
+    with pytest.raises(ValueError, match="ticket IDs differ"):
+        embed.load_checked(path, ids[::-1], texts)          # different split / order
+    with pytest.raises(ValueError, match="text differs"):
+        embed.load_checked(path, ids, ["a\nb", "c\nX", "e\nf"])  # different cleaning
+    with pytest.raises(ValueError, match="missing"):
+        embed.load_checked(tmp_path / "other.npy", ids, texts)   # no manifest at all
