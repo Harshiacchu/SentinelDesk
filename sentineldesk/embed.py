@@ -14,7 +14,11 @@ def _model():
 
 
 def encode(texts: list[str], kind: str = "query", batch_size: int = 64) -> np.ndarray:
-    """L2-normalised embeddings. e5 models expect 'query: ' / 'passage: ' prefixes."""
+    """L2-normalised float32 embeddings, shape (len(texts), 768).
+
+    Use kind="query" everywhere in SentinelDesk: the e5 model card says "query: " is for
+    symmetric tasks (ticket vs ticket) and for embeddings used as classifier features.
+    """
     prefix = "query: " if kind == "query" else "passage: "
     return _model().encode(
         [prefix + t for t in texts],
