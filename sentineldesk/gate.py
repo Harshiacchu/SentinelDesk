@@ -27,7 +27,7 @@ ESCALATE = "escalate"
 LABELS = {AUTO: "Auto-Draft Ready", ESCALATE: "Escalate to On-Call Engineer"}  # for the UI
 
 _THRESHOLDS_FILE = Path(__file__).resolve().parent.parent / "config" / "thresholds.json"
-_file_cache: dict = {"key": None, "mtime": None, "data": {}}
+_file_cache: dict = {"key": None, "data": {}}  # key = (path, mtime): a different file never reuses old data
 
 
 def thresholds() -> dict:
@@ -38,11 +38,10 @@ def thresholds() -> dict:
         "t_high_incident": float(getattr(config, "HIGH_INCIDENT_THRESHOLD", 0.5)),
     }
     try:
-        mtime = _THRESHOLDS_FILE.stat().st_mtime
-        key = (str(_THRESHOLDS_FILE), mtime)  # path + mtime, so a cache from another file is never reused
-        if _file_cache.get("key") != key:
+        key = (str(_THRESHOLDS_FILE), _THRESHOLDS_FILE.stat().st_mtime)
+        if _file_cache["key"] != key:
             _file_cache["data"] = json.loads(_THRESHOLDS_FILE.read_text(encoding="utf-8"))
-            _file_cache["key"], _file_cache["mtime"] = key, mtime
+            _file_cache["key"] = key
         for key in out:
             val = _file_cache["data"].get(key)
             if isinstance(val, (int, float)) and not isinstance(val, bool):
@@ -164,6 +163,9 @@ def pre(triage: dict, hits: list[dict], text: str, lang: str) -> dict:
         thr = thresholds()
         reasons = []
 
+        if not text.strip():  # nothing to classify or answer (empty or whitespace-only ticket)
+            reasons.append(_r("LOW_CONFIDENCE", "The ticket has no text, so there is nothing to classify or answer."))
+
         m = INJECTION.search(text)
         if m:
             reasons.append(_r("INJECTION", f'The ticket contains instruction-like text ("{_short(m.group(0))}") aimed at the assistant.'))
@@ -215,7 +217,7 @@ def pre(triage: dict, hits: list[dict], text: str, lang: str) -> dict:
 
 _TICKET_ID = re.compile(r"TKT-\d{5}")
 # List numbering: "1. " at line start, or inline after ":" / "." / "!" / "?" ("...steps: 1. Update ... 2. Restart").
-_LIST_NUMBER = re.compile(r"^\s*\d{1,2}[.)]\s|(?<=[:.!?;])\s+\d{1,2}[.)](?=\s+[A-ZÄÖÜ\"'(\[])", re.MULTILINE)
+_LIST_NUMBER = re.compile(r"^\s*[\[(]?\d{1,2}[.)]\s|(?<=[:.!?;])\s+[\[(]?\d{1,2}[.)](?=\s+[A-ZÄÖÜ\"'(\[])", re.MULTILINE)
 _STEP_NUMBER = re.compile(r"\b(step|schritt)\s+\d{1,2}\b", _F)
 # Digits glued to a preceding letter are identifiers (IPv4, Win10, E5), not claims.
 _NUMBER = re.compile(r"(?<!\w)\d+(?:[.,:]\d+)*")
@@ -286,6 +288,27 @@ def _detect_lang(text: str) -> str | None:
         return None
 
 
+# Offers the reply may only make when a cited case makes them too (a call, or an escalation / hand-over).
+_OFFER_KINDS = {
+    "a call": _rx(
+        r"\b(schedule|arrange|book|set up|organi[sz]e|propose|offer|plan)\b[^.!?\n]{0,40}\b(call|callback|phone call|video call|meeting)\b",
+        r"\b(call|phone|ring)\s+(you|us)\b|\bcall[- ]?back\b|\bgive you a call\b",
+        r"\b(Anruf|Anrufe|Rückruf|Telefonat|Telefonkonferenz|telefonisch\w*|anrufen|Videoanruf)\b",
+        r"\b(Termin|Gespräch)\b[^.!?\n]{0,30}\b(vereinbar\w*|ausmachen)\b",
+    ),
+    "an escalation": _rx(
+        r"\bescalat\w+\b",
+        r"\b(forward|pass|hand)\w*\b[^.!?\n]{0,30}\b(specialist|specialists|colleague|engineer|manager|senior)\b",
+        r"\beskalier\w*\b|\bEskalation\b|\bweiterleit\w*\b|\bSpezialist\w*\b|\bExperten\b",
+    ),
+}
+
+
+def unsupported_offers(reply: str, cited_answers: str) -> list[str]:
+    """Kinds of offer ("a call", "an escalation") that the reply makes but no cited case makes."""
+    return [kind for kind, rx in _OFFER_KINDS.items() if rx.search(reply) and not rx.search(cited_answers)]
+
+
 # Template placeholders copied from dataset answers ("Dear <name>, call <tel_num>").
 _PLACEHOLDER = re.compile(r"<[A-Za-z_]+>|\[Your Name\]|\[Ihr Name\]")
 _LANG_NAME = {"en": "English", "de": "German"}
@@ -336,6 +359,10 @@ def post(draft: dict | None, hits: list[dict], lang: str = "", text: str = "") -
         leaked = sorted(set(_PLACEHOLDER.findall(reply)))
         if leaked:
             reasons.append(_r("LLM_ERROR", f"The reply contains template placeholders ({', '.join(leaked[:3])}) copied from a past answer."))
+
+        offers = unsupported_offers(reply, "\n".join(hit_answer(h) for h in cited_hits))
+        if offers:
+            reasons.append(_r("LLM_ERROR", f"The reply offers {' and '.join(offers)}, but none of the cited past tickets does."))
 
         return _result(reasons)
     except Exception as e:

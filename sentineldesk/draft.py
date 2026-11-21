@@ -24,11 +24,13 @@ import time
 from pathlib import Path
 
 from . import config  # loads .env
+from . import gate
 from .gate import hit_answer
 
 SYSTEM_PROMPT = (Path(__file__).parent / "prompts" / "draft_system.md").read_text(encoding="utf-8")
 
-DEFAULT_MODELS = {"gemini": "gemini-3.5-flash", "anthropic": "claude-opus-5-5"}
+# gemini-3.5-flash-lite: p50 ~1.2 s, p95 ~1.6 s in scripts/bench_draft.py (gemini-3.5-flash: p50 ~10 s, p95 ~30 s), same gate pass rate.
+DEFAULT_MODELS = {"gemini": "gemini-3.5-flash-lite", "anthropic": "claude-opus-5-5"}
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "gemini").strip().lower()
 LLM_MODEL = (os.getenv("LLM_MODEL") or os.getenv("SENTINEL_LLM_MODEL")
              or DEFAULT_MODELS.get(LLM_PROVIDER, DEFAULT_MODELS["gemini"]))
@@ -38,13 +40,28 @@ LLM_TIMEOUT_S = float(os.getenv("LLM_TIMEOUT_S") or getattr(config, "LLM_TIMEOUT
 RETRY_BACKOFF_S = 2.0                                        # one retry on HTTP 429
 GEMINI_USE_VERTEX = os.getenv("GEMINI_USE_VERTEX", "false").strip().lower() in ("1", "true", "yes")
 
-# Latency / cost knobs. None = leave at the provider default. generate(opts=...) overrides per call.
-#   thinking      Gemini thinking level: "MINIMAL" | "LOW" | "MEDIUM" | "HIGH"
+# Latency / cost knobs. None = leave at the provider default. generate(opts=...) overrides per call
+# (pass False to switch a default off for one call). The defaults below come from scripts/bench_draft.py:
+# minimal thinking + a 150-word reply (contract section 8). Override in .env: LLM_THINKING=HIGH|off, LLM_MAX_WORDS=200|0.
+#   thinking      Gemini thinking level: "MINIMAL" | "LOW" | "MEDIUM" | "HIGH" (a model that rejects it is retried without)
 #   top_cases     send only the first N retrieved cases to the LLM
 #   answer_chars  trim each case's resolution to about this many characters
 #   max_words     ask for a reply under N words (and cap output tokens to match, unless max_tokens is set)
 #   max_tokens    hard output-token limit (thinking tokens count against it on Gemini)
-DEFAULT_OPTS = {"thinking": None, "top_cases": None, "answer_chars": None, "max_words": None, "max_tokens": None}
+def _env_opt(name: str, cast, default):
+    raw = (os.getenv(name) or "").strip()
+    if not raw:
+        return default
+    if raw.lower() in ("0", "none", "off", "default"):
+        return None
+    try:
+        return cast(raw)
+    except ValueError:
+        return default
+
+
+DEFAULT_OPTS = {"thinking": _env_opt("LLM_THINKING", str, "MINIMAL"), "top_cases": None, "answer_chars": None,
+                "max_words": _env_opt("LLM_MAX_WORDS", int, 150), "max_tokens": None}
 
 try:  # P1's harness keys its draft cache on config.LLM_MODEL: keep it equal to the model actually used
     config.LLM_MODEL = LLM_MODEL
@@ -54,6 +71,9 @@ except Exception:
 OFFLINE = os.getenv("OFFLINE", "").strip().lower() in ("1", "true", "yes")
 RECORD_DRAFTS = os.getenv("RECORD_DRAFTS", "").strip().lower() in ("1", "true", "yes")
 DEMO_CACHE = Path(__file__).resolve().parent.parent / "cache" / "demo_drafts.json"
+
+# Longest ticket text sent to the LLM. Real tickets are ~170 words at most; a pasted log can be huge.
+MAX_TICKET_CHARS = int(os.getenv("LLM_MAX_TICKET_CHARS") or 6000)
 
 LANG_NAMES = {"en": "English", "de": "German"}
 
@@ -126,9 +146,25 @@ def _mask(text: str) -> str:
             out = out[0]
         if isinstance(out, dict):  # contract: {text, entities}
             out = out.get("text", text or "")
-        return str(out)
+        return _extra_mask(str(out))
     except Exception:
-        return text or ""
+        return _extra_mask(text or "")
+
+
+# Safety net behind pii.py (P3): its patterns miss compact IBANs ("DE89370400440532013000") and IPv6.
+# Nothing may reach the LLM unmasked, so these run after pii.mask. Masking twice is harmless.
+_EXTRA_PII = (
+    ("IBAN", re.compile(r"\b[A-Z]{2}\d{2}(?: ?[A-Z0-9]){11,30}\b")),
+    ("IP", re.compile(r"\b(?:[0-9A-Fa-f]{1,4}:){3,7}[0-9A-Fa-f]{1,4}\b"
+                      r"|\b[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4}){0,6}::(?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4}){0,6})?(?![\w:])")),
+    ("CARD", re.compile(r"\b(?:\d[ -]?){13,19}\b")),
+)
+
+
+def _extra_mask(text: str) -> str:
+    for label, pattern in _EXTRA_PII:
+        text = pattern.sub(f"[{label}]", text)
+    return text
 
 
 def _clean(text: str) -> str:
@@ -137,11 +173,21 @@ def _clean(text: str) -> str:
 
 
 _TEMPLATE_PLACEHOLDER = re.compile(r"<[A-Za-z_]+>|\[Your Name\]|\[Ihr Name\]")
+_NAME_PLACEHOLDER = re.compile(r"<(?:first_|last_|full_)?name>|\[Your Name\]|\[Ihr Name\]", re.IGNORECASE)
+_LINE_BREAK_TAG = re.compile(r"<br\s*/?>", re.IGNORECASE)
+_SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
 
 
 def _clean_case(text: str) -> str:
-    """Case text from the KB: also drop template placeholders (<name>, <tel_num>, ...) so the model cannot copy them."""
-    return re.sub(r"[ \t]{2,}", " ", _TEMPLATE_PLACEHOLDER.sub("", _clean(text))).strip()
+    """Case text from the KB, without template placeholders the model could copy (<name>, <tel_num>, ...).
+
+    A name placeholder is simply removed ("Dear <name>," -> "Dear ,"). Any other placeholder stands for a phone
+    number, account number or link: the whole sentence is dropped, so no broken half-sentence is left behind
+    ("call us at <tel_num> to book a time" must not become "call us at to book a time").
+    """
+    text = _NAME_PLACEHOLDER.sub("", _LINE_BREAK_TAG.sub("\n", _clean(text)))
+    kept = [sent for sent in _SENTENCE_END.split(text) if not _TEMPLATE_PLACEHOLDER.search(sent)]
+    return re.sub(r"[ \t]{2,}", " ", " ".join(kept)).strip()
 
 
 def _trim(text: str, limit: int | None) -> str:
@@ -158,7 +204,8 @@ def _trim(text: str, limit: int | None) -> str:
 
 
 def _merged(opts: dict | None) -> dict:
-    return {**DEFAULT_OPTS, **{k: v for k, v in (opts or {}).items() if v is not None}}
+    merged = {**DEFAULT_OPTS, **{k: v for k, v in (opts or {}).items() if v is not None}}
+    return {k: (None if v is False else v) for k, v in merged.items()}  # False = off for this call
 
 
 def _token_limit(o: dict) -> int:
@@ -167,6 +214,21 @@ def _token_limit(o: dict) -> int:
     if o["max_words"]:  # ~1.3 tokens per English word, ~2 for German, plus JSON overhead
         return int(o["max_words"] * 2.5) + 80
     return LLM_MAX_TOKENS
+
+
+def _ticket_for_llm(text: str) -> str:
+    """Masked ticket text, cut to about MAX_TICKET_CHARS.
+
+    The cut happens BEFORE masking, at a word boundary (so an email or IBAN is never split in half):
+    pii.py's email pattern gets quadratically slower on long input (200k characters would take over a minute).
+    """
+    text = text or ""
+    was_cut = len(text) > MAX_TICKET_CHARS
+    if was_cut:
+        head = text[:MAX_TICKET_CHARS]
+        m = re.search(r"\s\S*$", head)
+        text = head[: m.start()] if m else head
+    return _clean(text) + (" [...text cut]" if was_cut else "")
 
 
 def build_user_message(text: str, lang: str, hits: list[dict], opts: dict | None = None) -> str:
@@ -181,7 +243,7 @@ def build_user_message(text: str, lang: str, hits: list[dict], opts: dict | None
     )
     msg = (
         f"<cases>\n{cases}\n</cases>\n\n"
-        f"<ticket>\n{_clean(text)}\n</ticket>\n\n"
+        f"<ticket>\n{_ticket_for_llm(text)}\n</ticket>\n\n"
         f"Reply language: {LANG_NAMES.get(lang, 'English')}"
     )
     if o["max_words"]:
@@ -202,6 +264,28 @@ def _result(reply="", cited_ids=None, not_found=False, stop_reason=None, error=N
     }
 
 
+_NUMBERED_ITEM = re.compile(r"(?:^|[ \t])\d{1,2}[.)][ \t]+\S")
+_INLINE_ITEM_START = re.compile(r"(?<=[.!?\])])[ \t]+(?=\d{1,2}[.)][ \t]+\S)")
+
+
+_STEP_TAIL = re.compile(r"(?<=[.!?\]])[ \t]{2,}(?=[A-ZÄÖÜ])")
+_STEP_LINE = re.compile(r"\s*\d{1,2}[.)]\s")
+
+
+def _tidy_reply(reply: str) -> str:
+    """Layout fixes: the model sometimes writes "... text. 1. Step one. 2. Step two." on one line, or glues the closing
+    sentence to the last step with a double space. Put each numbered step, and the closing, on its own line."""
+    lines = []
+    for line in reply.split("\n"):
+        if len(_NUMBERED_ITEM.findall(line)) >= 2:
+            line = _INLINE_ITEM_START.sub("\n", line)
+        lines.append(line)
+    out = []
+    for line in "\n".join(lines).split("\n"):
+        out.append(_STEP_TAIL.sub("\n\n", line) if _STEP_LINE.match(line) else line)
+    return "\n".join(out)
+
+
 def _parse(raw: str) -> dict | None:
     """Parse and type-check the model's JSON. Returns None if it is not what we asked for."""
     try:
@@ -218,7 +302,7 @@ def _parse(raw: str) -> dict | None:
         m = _ID_RE.search(str(c))
         if m and m.group(0) not in ids:
             ids.append(m.group(0))
-    return {"reply": reply.strip(), "cited_ids": ids, "not_found": not_found}
+    return {"reply": _tidy_reply(reply.strip()), "cited_ids": ids, "not_found": not_found}
 
 
 def _from_json(raw: str, stop_reason: str = "end_turn") -> dict:
@@ -259,11 +343,20 @@ def _call_gemini(model: str, user_msg: str, o: dict) -> dict:
     )
     if o["thinking"]:
         cfg.thinking_config = types.ThinkingConfig(thinking_level=str(o["thinking"]).upper())
-    try:
-        resp = _with_retry(
+    def generate():
+        return _with_retry(
             lambda: _gemini_client().models.generate_content(model=model, contents=user_msg, config=cfg),
             lambda e: isinstance(e, errors.APIError) and e.code == 429,
         )
+
+    try:
+        try:
+            resp = generate()
+        except errors.APIError as e:
+            if e.code != 400 or cfg.thinking_config is None:
+                raise
+            cfg.thinking_config = None  # this model rejects the thinking level: use its own default
+            resp = generate()
     except errors.APIError as e:
         return _result(error="api_error: rate limited" if e.code == 429 else f"api_error: HTTP {e.code}")
     except Exception as e:  # missing key, timeout, network: never crash the console
@@ -299,7 +392,7 @@ def _call_anthropic(model: str, user_msg: str, o: dict) -> dict:
         response = _with_retry(
             lambda: _anthropic_client().messages.create(
                 model=model,
-                max_tokens=_token_limit(o),
+                max_tokens=int(o["max_tokens"] or LLM_MAX_TOKENS),  # no word-derived cap: thinking counts against it
                 system=SYSTEM_PROMPT,
                 messages=[{"role": "user", "content": user_msg}],
                 output_config={
@@ -399,10 +492,12 @@ def generate(text: str, lang: str, hits: list[dict], model: str | None = None, o
             call = _call_anthropic if provider == "anthropic" else _call_gemini
             out = call(model, user_msg, o)
             if RECORD_DRAFTS and out["reply"] and not out["error"] and out["stop_reason"] not in ("refusal", "max_tokens"):
-                offline_put(text, lang, {**out, "model": model})
+                # only drafts the post-gate accepts are worth replaying
+                if gate.post({**out, "ticket_text": _ticket_for_llm(text)}, hits, lang)["status"] == gate.AUTO:
+                    offline_put(text, lang, {**out, "model": model})
     except Exception as e:
         out = _result(error=f"api_error: {type(e).__name__}: {str(e)[:120]}")
-    out.update(provider=provider, model=model, ticket_text=_clean(text),
+    out.update(provider=provider, model=model, ticket_text=_ticket_for_llm(text),
                latency_ms=round((time.perf_counter() - t0) * 1000))
     return out
 

@@ -1,0 +1,112 @@
+{
+ "25751a3fa6ed9fcc03abfa6c97a06cf89a147995a24ddee59cee9900e5b81067": {
+  "reply": "Hello,\n\nThanks for reaching out, and I'm sorry you're experiencing a billing page error when trying to download your invoice.\n\nTo help me further, could you tell me:\n\n1. Your account number [TKT-02189].\n2. A copy of the invoice [TKT-02189].\n3. Any additional questions [TKT-02189].\n\nWe will review the matter and contact you to discuss the next steps to resolve the issue [TKT-02189].\n\nBest regards,\nSupport Team",
+  "cited_ids": [
+   "TKT-02189"
+  ],
+  "not_found": false,
+  "stop_reason": "end_turn",
+  "model": "gemini-3.5-flash-lite"
+ },
+ "8ed0d3e67a418058e83e4492121e623ee56c5efaca8569aecce285e4c6c8dc26": {
+  "reply": "Hello,\n\nThanks for reaching out, and I'm sorry you are looking for more details on our scalable project management solutions.\n\nTo help me further, could you tell me:\n\n1. What specific features you are looking for\n\nI will continue once I have the answers [TKT-00166].\n\nBest regards,\nSupport Team",
+  "cited_ids": [
+   "TKT-00166"
+  ],
+  "not_found": false,
+  "stop_reason": "end_turn",
+  "model": "gemini-3.5-flash-lite"
+ },
+ "ae8058af85348a279a5b8fb0e8cc133513823f9dc0c796481ec19d6211058186": {
+  "reply": "Hello,\n\nThanks for reaching out, and I'm sorry you're seeing discrepancies in your subscription invoices.\n\nTo help me further, could you tell me:\n\n1. your account number\n\n2. a detailed description of the billing discrepancies you are experiencing [TKT-04658]\n\nI will continue once you have the answers.\n\nBest regards,\nSupport Team",
+  "cited_ids": [
+   "TKT-04658"
+  ],
+  "not_found": false,
+  "stop_reason": "end_turn",
+  "model": "gemini-3.5-flash-lite"
+ },
+ "abad2935e0f25ff21d39336d013c6866cf366bcf02ff92f4921a95640f6763d1": {
+  "reply": "Hello,\n\nThanks for reaching out, and I'm sorry you're seeing synchronization problems across your applications.\n\nTo help me further, could you tell me:\n\n1. more details about the problem you are experiencing, any specific error messages, or symptoms [TKT-05299]\n2. the affected products, failure frequency, and the type of support needed [TKT-20317]\n\nWe will continue once you have the answers.\n\nBest regards,\nSupport Team",
+  "cited_ids": [
+   "TKT-05299",
+   "TKT-20317"
+  ],
+  "not_found": false,
+  "stop_reason": "end_turn",
+  "model": "gemini-3.5-flash-lite"
+ },
+ "20c249f4de5242fc92b393a9a499cd2eb8eb3a06fd79884628c5378f754cbfd7": {
+  "reply": "Hello,\n\nThanks for reaching out, and I'm sorry you're experiencing crashes with the JIRA Software integration.\n\nDamit ich Ihnen weiterhelfen kann, teilen Sie mir bitte Folgendes mit:\n\n1. the API versions currently in use\n2. any error messages received\n\nI will continue once I have the answers.\n\nBest regards,\nSupport Team",
+  "cited_ids": [
+   "TKT-21221"
+  ],
+  "not_found": false,
+  "stop_reason": "end_turn",
+  "model": "gemini-3.5-flash-lite"
+ },
+ "ae69e84a15b88baf5206d1c8e0934052a8b29dd19bf31ff2a4b7a4805b01b2f6": {
+  "reply": "Hello,\n\nThanks for reaching out, and I am sorry you are experiencing data inconsistencies and integration errors after the latest software updates.\n\nTo help me further, could you tell me:\n\n1. Details on the recent software updates and integration changes made [TKT-19858].\n2. Any specific error messages you are seeing [TKT-19858].\n\nWe will continue once we have the answers.\n\nBest regards,\nSupport Team",
+  "cited_ids": [
+   "TKT-19858"
+  ],
+  "not_found": false,
+  "stop_reason": "end_turn",
+  "model": "gemini-3.5-flash-lite"
+ },
+ "85e6664059daecc5d68cae42a4fc31ded6c4e7f1489ba618f3ee27343c8a9122": {
+  "reply": "Guten Tag,\n\nDanke für Ihre Nachricht, und es tut mir leid, dass Sie detaillierte Dokumentation und Leitfäden für die Integration von ClickUp in Ihre SaaS-Plattform benötigen.\n\nDamit ich Ihnen weiterhelfen kann, teilen Sie mir bitte Folgendes mit:\n1. zusätzliche Informationen zu Ihrem aktuellen Arbeitsablauf und den spezifischen Aufgaben, die automatisiert werden sollen [TKT-12485].\n\nIch werde fortfahren, sobald ich Ihre Antworten erhalten habe.\n\nMit freundlichen Grüßen,\nIhr Support-Team",
+  "cited_ids": [
+   "TKT-12485"
+  ],
+  "not_found": false,
+  "stop_reason": "end_turn",
+  "model": "gemini-3.5-flash-lite"
+ },
+ "2d5173a53902784ffc1c9d2c01df94daddb1610af5ede8e4065c985c84b2a1f5": {
+  "reply": "Guten Tag,\n\nDanke für Ihre Nachricht, und es tut mir leid, dass Sie Schwierigkeiten mit dem Algorithmus haben.\n\nDamit ich Ihnen weiterhelfen kann, teilen Sie mir bitte Folgendes mit:\n\n1. den Fehlercode\n2. die konflikthafte Datenvormate\n\nIch werde die Bearbeitung fortsetzen, sobald wir diese Antworten vorliegen haben.\n\nMit freundlichen Grüßen,\nIhr Support-Team",
+  "cited_ids": [
+   "TKT-01386"
+  ],
+  "not_found": false,
+  "stop_reason": "end_turn",
+  "model": "gemini-3.5-flash-lite"
+ },
+ "0baa9451a691af7112a4c202ba7e445b8fe0af5b864ba14ed0922040947a5d76": {
+  "reply": "Guten Tag,\n\nDanke für Ihre Nachricht, und es tut mir leid, dass Sie Sicherheitsprobleme im medizinischen Datensystem bemerken.\n\nDamit ich Ihnen weiterhelfen kann, teilen Sie mir bitte Folgendes mit:\n\n1. mehr Details zu den Lücken und der aktuellen Systemeinstellung [TKT-05780]\n\n2. weitere Details zu den durchgeführten Sicherheitsaudits [TKT-22539]\n\nIch werde mich mit Ihnen in Verbindung setzen, sobald ich Ihre Antworten erhalten habe.\n\nMit freundlichen Grüßen,\nIhr Support-Team",
+  "cited_ids": [
+   "TKT-05780",
+   "TKT-22539"
+  ],
+  "not_found": false,
+  "stop_reason": "end_turn",
+  "model": "gemini-3.5-flash-lite"
+ },
+ "53804e32dca735991ae60e76478b2bb6c80e378e085e9ad800908b2bad9991c4": {
+  "reply": "Guten Tag,\n\nDanke für Ihre Nachricht, und es tut mir leid, dass Sie Unterstützung bei digitalen Strategien für Ihre Marketingagentur benötigen [TKT-12398].\n\nBitte versuchen Sie Folgendes:\n\n1. Umsetzung einer Suchmaschinenoptimierungsstrategie einschließlich Keyword-Recherche, On-Page-Optimierung und Linkbuilding [TKT-12398].\n2. Nutzung sozialer Plattformen wie Facebook, Twitter und LinkedIn, um die Markenbekanntheit zu steigern und das Engagement zu erhöhen [TKT-12398].\n\nDamit ich Ihnen weiterhelfen kann, teilen Sie mir bitte Folgendes mit:\n\n1. Weitere Informationen zu Ihren aktuellen Marketingaktivitäten und Bereiche, auf die Sie sich konzentrieren möchten [TKT-12398].\n\nIch werde fortfahren, sobald ich Ihre Antworten erhalten habe.\n\nMit freundlichen Grüßen,\nIhr Support-Team",
+  "cited_ids": [
+   "TKT-12398"
+  ],
+  "not_found": false,
+  "stop_reason": "end_turn",
+  "model": "gemini-3.5-flash-lite"
+ },
+ "d1281fc98353c851073c99f11388e4a66394d9843d5148dafda06b70ebdc6c77": {
+  "reply": "Guten Tag,\n\nDanke für Ihre Nachricht, und es tut mir leid, dass die digitalen Strategien der Marketingagentur unerwartet scheitern.\n\nDamit ich Ihnen weiterhelfen kann, teilen Sie mir bitte Folgendes mit:\n\n1. Weitere Details zu technischen Störungen und den eingesetzten Taktiken [TKT-03314].\n\nIch werde mich bei Ihnen melden, sobald ich die Antworten erhalten habe.\n\nMit freundlichen Grüßen,\nIhr Support-Team",
+  "cited_ids": [
+   "TKT-03314"
+  ],
+  "not_found": false,
+  "stop_reason": "end_turn",
+  "model": "gemini-3.5-flash-lite"
+ },
+ "fa0893274482d7a2eb81e03f5c5ed04e3525b76721800dd945fdfef65c9f34a7": {
+  "reply": "Hello,\n\nThanks for reaching out, and I'm sorry you're having trouble logging into the portal.\n\nTo help me further, could you tell me:\n\n1. any error messages you receive when attempting to log in [TKT-18599]\n2. the browser version you are using [TKT-18599]\n\nI will continue once I have the answers.\n\nBest regards,\nSupport Team",
+  "cited_ids": [
+   "TKT-18599"
+  ],
+  "not_found": false,
+  "stop_reason": "end_turn",
+  "model": "gemini-3.5-flash-lite"
+ }
+}
