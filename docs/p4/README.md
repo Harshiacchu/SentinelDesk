@@ -49,9 +49,30 @@ gate pass rate. Trimming the cases (top 3, 700 characters) did not help and is o
 Per call: `draft.generate(..., opts={...})` accepts `thinking`, `top_cases`, `answer_chars`, `max_words`, `max_tokens` (`False` switches a default off).
 A model that rejects the thinking level is retried once without it. Claude (`LLM_PROVIDER=anthropic`) ignores the word-derived token cap.
 
+## Reply format
+
+Set in `sentineldesk/prompts/draft_system.md` (the grounding and safety rules are unchanged). A reply is, in order:
+1. a greeting on its own line ("Hello," / "Guten Tag,");
+2. one first-person sentence that thanks the customer and acknowledges their specific problem ("Thanks for reaching out, and I'm sorry you're seeing ...");
+   never "You are facing ...";
+3. if the cited cases contain concrete troubleshooting steps the customer has not already tried: those first, under "Please try the following:" (at most four);
+4. then only the information that is actually missing, as short specific questions under "To help me further, could you tell me:" (at most three);
+5. one sentence on what happens next (only what a cited case says; otherwise "we will continue once we have the answers");
+6. the sign-off "Best regards, Support Team" / "Mit freundlichen Grüßen, Ihr Support-Team".
+
+A call, callback, meeting, timeline or escalation path is offered only if a cited case offers it; `gate.post` enforces this for calls and escalations
+(`unsupported_offers`, reported as `LLM_ERROR`). Under 150 words. On 20 real tickets (10 EN, 10 DE): gate 20/20, none opening with "You are ...",
+sign-off 20/20, median 57 words, no English phrase inside a German reply.
+The model sometimes puts the steps or the closing on one line; `draft._tidy_reply` puts each step and the closing on its own line.
+Sentences of past answers that hold a phone number, account number or link (`<tel_num>`, `<acc_num>`, ...) are dropped before the prompt; `<name>` is removed.
+
+Tests: `tests/test_gate_draft.py` (offline: prompt rules present, gate backstop) and `tests/test_reply_quality_live.py`
+(real LLM with fake cases: steps come first, no call offered when no case offers one, already-tried steps not repeated, tone and sign-off in EN and DE).
+Run the live ones with `RUN_LIVE_LLM_TESTS=1 pytest tests/test_reply_quality_live.py`; they are skipped otherwise.
+
 ## Demo safety net
 
-`cache/demo_drafts.json` holds real drafts for the four sample buttons that pass the gate plus ten real tickets, keyed by language and masked text.
+`cache/demo_drafts.json` holds 12 real drafts (the two sample buttons that can be drafted plus ten real tickets), keyed by language and masked text. Only drafts that `gate.post` accepts are recorded.
 `OFFLINE=1` serves them with no API key (mode `offline`, 0 ms); a ticket that is not cached escalates with `LLM_ERROR`.
 To add tickets: run them once with `RECORD_DRAFTS=1`. Cached citations only validate if retrieval returns the same hits (same KB and embeddings).
 

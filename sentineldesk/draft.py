@@ -24,6 +24,7 @@ import time
 from pathlib import Path
 
 from . import config  # loads .env
+from . import gate
 from .gate import hit_answer
 
 SYSTEM_PROMPT = (Path(__file__).parent / "prompts" / "draft_system.md").read_text(encoding="utf-8")
@@ -172,11 +173,21 @@ def _clean(text: str) -> str:
 
 
 _TEMPLATE_PLACEHOLDER = re.compile(r"<[A-Za-z_]+>|\[Your Name\]|\[Ihr Name\]")
+_NAME_PLACEHOLDER = re.compile(r"<(?:first_|last_|full_)?name>|\[Your Name\]|\[Ihr Name\]", re.IGNORECASE)
+_LINE_BREAK_TAG = re.compile(r"<br\s*/?>", re.IGNORECASE)
+_SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
 
 
 def _clean_case(text: str) -> str:
-    """Case text from the KB: also drop template placeholders (<name>, <tel_num>, ...) so the model cannot copy them."""
-    return re.sub(r"[ \t]{2,}", " ", _TEMPLATE_PLACEHOLDER.sub("", _clean(text))).strip()
+    """Case text from the KB, without template placeholders the model could copy (<name>, <tel_num>, ...).
+
+    A name placeholder is simply removed ("Dear <name>," -> "Dear ,"). Any other placeholder stands for a phone
+    number, account number or link: the whole sentence is dropped, so no broken half-sentence is left behind
+    ("call us at <tel_num> to book a time" must not become "call us at to book a time").
+    """
+    text = _NAME_PLACEHOLDER.sub("", _LINE_BREAK_TAG.sub("\n", _clean(text)))
+    kept = [sent for sent in _SENTENCE_END.split(text) if not _TEMPLATE_PLACEHOLDER.search(sent)]
+    return re.sub(r"[ \t]{2,}", " ", " ".join(kept)).strip()
 
 
 def _trim(text: str, limit: int | None) -> str:
@@ -253,6 +264,28 @@ def _result(reply="", cited_ids=None, not_found=False, stop_reason=None, error=N
     }
 
 
+_NUMBERED_ITEM = re.compile(r"(?:^|[ \t])\d{1,2}[.)][ \t]+\S")
+_INLINE_ITEM_START = re.compile(r"(?<=[.!?\])])[ \t]+(?=\d{1,2}[.)][ \t]+\S)")
+
+
+_STEP_TAIL = re.compile(r"(?<=[.!?\]])[ \t]{2,}(?=[A-ZÄÖÜ])")
+_STEP_LINE = re.compile(r"\s*\d{1,2}[.)]\s")
+
+
+def _tidy_reply(reply: str) -> str:
+    """Layout fixes: the model sometimes writes "... text. 1. Step one. 2. Step two." on one line, or glues the closing
+    sentence to the last step with a double space. Put each numbered step, and the closing, on its own line."""
+    lines = []
+    for line in reply.split("\n"):
+        if len(_NUMBERED_ITEM.findall(line)) >= 2:
+            line = _INLINE_ITEM_START.sub("\n", line)
+        lines.append(line)
+    out = []
+    for line in "\n".join(lines).split("\n"):
+        out.append(_STEP_TAIL.sub("\n\n", line) if _STEP_LINE.match(line) else line)
+    return "\n".join(out)
+
+
 def _parse(raw: str) -> dict | None:
     """Parse and type-check the model's JSON. Returns None if it is not what we asked for."""
     try:
@@ -269,7 +302,7 @@ def _parse(raw: str) -> dict | None:
         m = _ID_RE.search(str(c))
         if m and m.group(0) not in ids:
             ids.append(m.group(0))
-    return {"reply": reply.strip(), "cited_ids": ids, "not_found": not_found}
+    return {"reply": _tidy_reply(reply.strip()), "cited_ids": ids, "not_found": not_found}
 
 
 def _from_json(raw: str, stop_reason: str = "end_turn") -> dict:
@@ -459,7 +492,9 @@ def generate(text: str, lang: str, hits: list[dict], model: str | None = None, o
             call = _call_anthropic if provider == "anthropic" else _call_gemini
             out = call(model, user_msg, o)
             if RECORD_DRAFTS and out["reply"] and not out["error"] and out["stop_reason"] not in ("refusal", "max_tokens"):
-                offline_put(text, lang, {**out, "model": model})
+                # only drafts the post-gate accepts are worth replaying
+                if gate.post({**out, "ticket_text": _ticket_for_llm(text)}, hits, lang)["status"] == gate.AUTO:
+                    offline_put(text, lang, {**out, "model": model})
     except Exception as e:
         out = _result(error=f"api_error: {type(e).__name__}: {str(e)[:120]}")
     out.update(provider=provider, model=model, ticket_text=_ticket_for_llm(text),
