@@ -28,12 +28,10 @@ export class BurstDetector {
       .filter((g) => g.tickets.length >= this.minTickets)
       .map(({ key, topic, tickets: list }) => {
         const times = list.map((t) => new Date(t.receivedAt).getTime());
-        const branches = {};
-        for (const t of list) branches[t.branch] = (branches[t.branch] ?? 0) + 1;
         const languages = {};
         for (const t of list) languages[t.language] = (languages[t.language] ?? 0) + 1;
         return {
-          key, topic, count: list.length, branches, languages,
+          key, topic, count: list.length, languages,
           ticketIds: list.map((t) => t.ticketId),
           firstAt: new Date(Math.min(...times)), lastAt: new Date(Math.max(...times)),
           threshold: this.minTickets,

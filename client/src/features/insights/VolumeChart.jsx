@@ -8,7 +8,7 @@ export function VolumeChart({ volume }) {
   const { colors } = useTheme();
   const still = useReducedMotion();
   const data = volume.map((b) => ({ ...b, time: clock(b.start) }));
-  const series = [['critical', 'Critical', colors.red], ['review', 'Needs a person', colors.amber], ['ready', 'Auto-drafted', colors.green]];
+  const series = [['critical', 'Urgent (paged)', colors.red], ['review', 'Sent to an engineer', colors.amber], ['ready', 'Answered automatically', colors.green]];
   return (
     <div style={{ height: 260 }}>
       <ResponsiveContainer>

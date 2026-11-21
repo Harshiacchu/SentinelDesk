@@ -1,6 +1,5 @@
 import { headlineFor, severityFor } from '../../domain/Severity.js';
 import { TicketStatus } from '../../domain/constants.js';
-import { newAccessKey } from '../../domain/conversation.js';
 
 /** Builds a persisted ticket record from raw input + a TriageResult. One place for that shape. */
 export class TicketFactory {
@@ -22,13 +21,8 @@ export class TicketFactory {
       receivedAt,
       subject: input.subject ?? null,
       body: input.body,
-      branch: input.branch,
       ...result,
       incidentKey: null,
-      assignee: null,
-      claimedAt: null,
-      accessKey: newAccessKey(),
-      messages: [],
       status: TicketStatus.OPEN,
       feedback: [],
       notes: [],

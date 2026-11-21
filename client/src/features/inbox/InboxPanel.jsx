@@ -45,7 +45,7 @@ function InboxItem({ ticket, active, onSelect }) {
           {ticket.subject || ticket.bodyPreview}
         </span>
         <span className="muted" style={{ fontSize: 11 }}>
-          {ticket.branch} · {ticket.language?.toUpperCase()}{ticket.incidentKey ? ' · outage' : ''}
+          {ticket.queue} · {ticket.language?.toUpperCase()}{ticket.incidentKey ? ' · outage' : ''}
         </span>
       </span>
       <span className="faint" style={{ fontSize: 11 }}>{timeAgo(ticket.receivedAt)}</span>

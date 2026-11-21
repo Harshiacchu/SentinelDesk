@@ -20,9 +20,6 @@ import { IncidentService } from './modules/incidents/IncidentService.js';
 import { AnalyticsService } from './modules/analytics/AnalyticsService.js';
 import { ChatService } from './modules/chat/ChatService.js';
 import { DemoSeeder } from './seed/DemoSeeder.js';
-import { AgentService } from './modules/agent/AgentService.js';
-import { AssistBuilder } from './modules/agent/AssistBuilder.js';
-import { SupportService } from './modules/support/SupportService.js';
 
 const log = createLogger('container');
 
@@ -62,8 +59,6 @@ export function buildContainer(config = env) {
     incidentService: new IncidentService({ repository, burstDetector }),
     analyticsService: new AnalyticsService({ repository, topicClassifier, burstDetector }),
     chatService: new ChatService({ repository }),
-    agentService: new AgentService({ repository, events, assistBuilder: new AssistBuilder() }),
-    supportService: new SupportService({ repository, triageService, events }),
     seeder: new DemoSeeder({ triageService, ticketService, repository }),
   };
 }

@@ -1,8 +1,6 @@
 import { ValidationError } from '../../core/errors.js';
-import { Branches } from '../../domain/constants.js';
 import { TicketFactory } from '../tickets/TicketFactory.js';
 import { TicketService } from '../tickets/TicketService.js';
-import { openingMessages } from '../../domain/conversation.js';
 
 /**
  * Use case: a new ticket arrives.
@@ -16,9 +14,8 @@ export class TriageService {
 
   async triage(input, { receivedAt = new Date(), silent = false } = {}) {
     if (!input?.body?.trim()) throw new ValidationError('body is required');
-    const branch = Branches.includes(input.branch) ? input.branch : Branches[0];
     const result = await this.provider.analyze({ subject: input.subject, body: input.body });
-    let record = this.factory.create({ input: { ...input, branch }, result, receivedAt });
+    let record = this.factory.create({ input, result, receivedAt });
 
     const recent = await this.repository.findSince(this.burstDetector.windowStart(receivedAt));
     const incident = this.burstDetector.detect([...recent, record], receivedAt).find((i) => i.topic === record.topic);
@@ -33,7 +30,6 @@ export class TriageService {
       await this.#linkSiblings(incident);
     }
 
-    record = { ...record, messages: openingMessages(record) };
     await this.repository.save(record);
     if (!silent) {
       this.events.emit('ticket.created', TicketService.summary(record));

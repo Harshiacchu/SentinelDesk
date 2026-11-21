@@ -9,8 +9,8 @@ export function analyticsRoutes({ analyticsService }) {
     res.json(await analyticsService.overview({ hours }));
   }));
   r.get('/heatmap', asyncHandler(async (req, res) => {
-    const minutes = intInRange(req.query.minutes, 'minutes', { min: 5, max: 1440, fallback: 60 });
-    res.json(await analyticsService.heatmap({ minutes }));
+    const hours = intInRange(req.query.hours, 'hours', { min: 1, max: 24, fallback: 6 });
+    res.json(await analyticsService.heatmap({ hours }));
   }));
   return r;
 }

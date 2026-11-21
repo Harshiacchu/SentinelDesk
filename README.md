@@ -78,14 +78,10 @@ server/   Express API: triage, smart inbox, outages, analytics, chat, live updat
 
 ```bash
 cd server && npm install && cp .env.example .env && npm run dev   # http://localhost:4000
-cd client && npm install && npm run dev                           # operator app: http://localhost:5173
-cd client && npm run dev:support                                  # customer app: http://localhost:5174/support
+cd client && npm install && npm run dev                           # http://localhost:5173
 ```
 
-The operator app (Console, Agent portal, Insights) and the customer support app are separate
-entries with separate ports and builds (`dist/`, `dist-support/`), so both can run side by side.
-
-Defaults need nothing else: `TRIAGE_PROVIDER=mock`, `TICKET_STORE=memory`, and ~120 demo tickets (including a live VPN outage across Berlin, Munich, Hamburg and Frankfurt) are seeded on start.
+Defaults need nothing else: `TRIAGE_PROVIDER=mock`, `TICKET_STORE=memory`, and ~120 demo tickets (including a live VPN outage) are seeded on start.
 
 | Switch (server/.env) | Options | Use |
 |---|---|---|
@@ -107,11 +103,11 @@ Before the models are trained, run the bridge on stubs with `SENTINEL_USE_MOCKS=
 
 ### What the console shows
 - **Smart inbox** sorted by urgency (Needs you / Ready / Done, paginated), live via SSE
-- **Outage banner** when similar incidents cluster, plus a **tracker** listing every similar ticket and the affected branches
+- **Outage banner** when similar incidents cluster, plus a **tracker** listing every similar ticket
 - **One-screen ticket view**: decision card, Apple-style outage rings, draft with an **Evidence lens** (every sentence → its source ticket; unsupported promises struck out), one primary action, "Was the AI right?" feedback
 - **Six detail cards** (Why, Classification, Evidence, Safety checks, Pipeline, Activity & notes): summary on the card, everything in a tabbed drawer
 - **Ask SentinelDesk** chat scoped to the ticket (answers only from stored evidence), **⌘K** quick triage
-- **Insights**: KPIs, outage **location map**, **branch × topic heatmap**, volume, decisions, departments, gate reasons
+- **Insights**: plain-language numbers, a **problem × hour heatmap** that shows when outages spiked, ticket volume, how tickets were handled, most common problems, and why tickets went to an engineer
 
 ### Design principles
 - **Ports and adapters:** `TriageProvider` and `TicketRepository` are abstract, with mock/HTTP and memory/Mongo implementations. `server/src/container.js` is the only file that knows concrete classes.

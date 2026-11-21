@@ -5,9 +5,7 @@ import { ThemeToggle } from '../components/ui/ThemeToggle.jsx';
 import { Icon } from '../components/ui/Icon.jsx';
 import { TicketComposer } from '../features/composer/TicketComposer.jsx';
 import { useAsync } from '../hooks/useAsync.js';
-import { useMeta } from '../hooks/useMeta.js';
 import { api } from '../api/sentinelApi.js';
-import { SUPPORT_URL } from '../lib/links.js';
 
 const STEPS = [
   ['01', 'Read', 'Detects English or German and hides emails, phones and IPs first.'],
@@ -18,7 +16,6 @@ const STEPS = [
 
 export function HomePage() {
   const navigate = useNavigate();
-  const meta = useMeta();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const { data: overview } = useAsync(() => api.analytics.overview(1), []);
@@ -38,8 +35,6 @@ export function HomePage() {
           <nav style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 22, fontSize: 14 }}>
             <Link to="/console" style={{ color: 'var(--text-2)' }}>Console</Link>
             <Link to="/insights" style={{ color: 'var(--text-2)' }}>Insights</Link>
-            <Link to="/agent" style={{ color: 'var(--text-2)' }}>Agent portal</Link>
-            <a href={SUPPORT_URL} target="_blank" rel="noreferrer" style={{ color: 'var(--text-2)' }}>Customer site ↗</a>
             <ThemeToggle />
           </nav>
         </header>
@@ -51,13 +46,13 @@ export function HomePage() {
             </span>
           )}
           <h1 className="title-grad rise" style={{ margin: 0, maxWidth: 860, textAlign: 'center', fontSize: 'clamp(36px, 6vw, 60px)', lineHeight: 1.05, fontWeight: 800, letterSpacing: '-0.04em', animationDelay: '.05s' }}>
-            Paste a ticket.<br />Get a decision you can check.
+            Paste the problem.<br />Get a decision you can check.
           </h1>
           <p className="muted rise" style={{ margin: '0 0 18px', maxWidth: 580, textAlign: 'center', fontSize: 17, lineHeight: 1.55, animationDelay: '.1s' }}>
-            Every answer points to the past tickets it came from. If there’s nothing to point to, it goes to a person.
+            Every answer points to the past tickets it came from. If there’s nothing safe to point to, it goes to the on-call engineer.
           </p>
           <section className="glass card rise" style={{ width: 760, maxWidth: '100%', animationDelay: '.15s' }}>
-            <TicketComposer branches={meta.branches} onSubmit={submit} busy={busy} error={error} />
+            <TicketComposer onSubmit={submit} busy={busy} error={error} />
           </section>
           <section style={{ marginTop: 72, width: 1000, maxWidth: '100%', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
             {STEPS.map(([n, title, text], i) => (

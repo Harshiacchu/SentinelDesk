@@ -6,11 +6,7 @@ import { createLogger } from '../../../core/logger.js';
 const log = createLogger('mongo');
 const PROJECTION = { _id: 0 };
 
-const OPEN = { status: { $nin: ['sent', 'resolved'] } };
-const FOR_AGENT = { $or: [{ severity: { $ne: 'ready' } }, { status: { $in: ['escalated', 'in_progress'] } }] };
 const FILTERS = {
-  unclaimed: { ...OPEN, ...FOR_AGENT, assignee: { $in: [null, undefined] } },
-  resolved_by_agents: { status: { $in: ['sent', 'resolved'] }, assignee: { $nin: [null, undefined] } },
   needs: { status: { $nin: ['sent', 'resolved'] }, severity: { $ne: 'ready' } },
   ready: { status: { $nin: ['sent', 'resolved'] }, severity: 'ready' },
   done: { status: { $in: ['sent', 'resolved'] } },
@@ -46,9 +42,9 @@ export class MongoTicketRepository extends TicketRepository {
     return TicketModel.findOneAndUpdate({ ticketId: id }, { $push: { [field]: entry } }, { new: true, projection: PROJECTION }).lean();
   }
 
-  async list({ filter = 'all', page = 1, limit = 8, agent }) {
-    const query = filter === 'mine' ? { ...OPEN, assignee: agent } : FILTERS[filter] ?? {};
-    const sort = filter === 'done' || filter === 'resolved_by_agents' ? { receivedAt: -1 } : { severityRank: 1, receivedAt: -1 };
+  async list({ filter = 'all', page = 1, limit = 8 }) {
+    const query = FILTERS[filter] ?? {};
+    const sort = filter === 'done' ? { receivedAt: -1 } : { severityRank: 1, receivedAt: -1 };
     const [items, total] = await Promise.all([
       TicketModel.find(query, PROJECTION).sort(sort).skip((page - 1) * limit).limit(limit).lean(),
       TicketModel.countDocuments(query),

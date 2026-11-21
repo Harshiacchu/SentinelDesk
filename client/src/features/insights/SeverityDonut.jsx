@@ -7,9 +7,9 @@ export function SeverityDonut({ severity }) {
   const { colors } = useTheme();
   const still = useReducedMotion();
   const data = [
-    { name: 'Critical', value: severity.critical ?? 0, color: colors.red },
-    { name: 'Needs a person', value: severity.review ?? 0, color: colors.amber },
-    { name: 'Auto-drafted', value: severity.ready ?? 0, color: colors.green },
+    { name: 'Urgent (paged)', value: severity.critical ?? 0, color: colors.red },
+    { name: 'Sent to an engineer', value: severity.review ?? 0, color: colors.amber },
+    { name: 'Answered automatically', value: severity.ready ?? 0, color: colors.green },
   ];
   const total = data.reduce((a, d) => a + d.value, 0);
   return (

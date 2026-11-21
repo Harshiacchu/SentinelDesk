@@ -20,25 +20,8 @@ export const api = {
     get: (key) => request(`/incidents/${encodeURIComponent(key)}`),
   },
 
-  agent: {
-    queue: ({ view = 'unclaimed', agent = '', page = 1, limit = 8 } = {}) => request(`/agent/queue?view=${view}&agent=${encodeURIComponent(agent)}&page=${page}&limit=${limit}`),
-    assist: (id) => request(`/agent/tickets/${encodeURIComponent(id)}/assist`),
-    claim: (id, agent) => request(`/agent/tickets/${encodeURIComponent(id)}/claim`, { method: 'POST', body: { agent } }),
-    release: (id, agent) => request(`/agent/tickets/${encodeURIComponent(id)}/release`, { method: 'POST', body: { agent } }),
-    message: (id, agent, text) => request(`/agent/tickets/${encodeURIComponent(id)}/messages`, { method: 'POST', body: { agent, text } }),
-    resolve: (id, agent) => request(`/agent/tickets/${encodeURIComponent(id)}/resolve`, { method: 'POST', body: { agent } }),
-  },
-
-  support: {
-    open: (ticket) => request('/support/tickets', { method: 'POST', body: ticket }),
-    view: (id, key) => request(`/support/tickets/${encodeURIComponent(id)}?key=${encodeURIComponent(key)}`),
-    say: (id, key, text) => request(`/support/tickets/${encodeURIComponent(id)}/messages?key=${encodeURIComponent(key)}`, { method: 'POST', body: { text } }),
-    person: (id, key) => request(`/support/tickets/${encodeURIComponent(id)}/person?key=${encodeURIComponent(key)}`, { method: 'POST' }),
-    eventsUrl: (id, key) => `/api/support/tickets/${encodeURIComponent(id)}/events?key=${encodeURIComponent(key)}`,
-  },
-
   analytics: {
     overview: (hours = 6) => request(`/analytics/overview?hours=${hours}`),
-    heatmap: (minutes = 60) => request(`/analytics/heatmap?minutes=${minutes}`),
+    heatmap: (hours = 6) => request(`/analytics/heatmap?hours=${hours}`),
   },
 };

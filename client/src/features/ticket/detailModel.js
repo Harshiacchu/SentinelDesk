@@ -30,7 +30,7 @@ export function buildDetails(ticket) {
           meta: `${Math.round(t[k].confidence * 100)}%`, tone: t[k].confidence >= 0.8 ? 'ready' : t[k].confidence >= 0.6 ? 'review' : 'critical', bar: t[k].confidence * 100,
         })),
         { key: 'lang', title: 'Language', text: `${LANGUAGE_NAMES[ticket.language] ?? ticket.language}, detected automatically`, meta: ticket.language.toUpperCase(), tone: 'info' },
-        { key: 'topic', title: 'Topic', text: `${ticket.topic}, used to spot outages across branches`, meta: ticket.branch, tone: 'info' },
+        { key: 'topic', title: 'Problem type', text: `${ticket.topic}, used to spot outages (many tickets about the same thing)`, meta: '', tone: 'info' },
       ],
     },
     {
@@ -42,12 +42,12 @@ export function buildDetails(ticket) {
     },
     {
       id: 'checks', name: 'Safety checks', tone: failed.length ? 'critical' : 'ready',
-      partial: `${ticket.checks.length - failed.length} of ${ticket.checks.length} passed`, hint: failed.length ? `stopped by ${failed.map((c) => c.code).join(', ')}` : 'nothing stopped it',
-      rows: ticket.checks.map((c) => ({ key: c.code, title: c.code, text: c.passed ? 'Passed' : ticket.reasonDetails?.[c.code] ?? reasonInfo(c.code).text, meta: c.passed ? 'ok' : 'fail', tone: c.passed ? 'ready' : 'critical' })),
+      partial: `${ticket.checks.length - failed.length} of ${ticket.checks.length} passed`, hint: failed.length ? failed.map((c) => reasonInfo(c.code).title).join(', ') : 'nothing stopped it',
+      rows: ticket.checks.map((c) => ({ key: c.code, title: reasonInfo(c.code).title, text: c.passed ? 'Passed' : ticket.reasonDetails?.[c.code] ?? reasonInfo(c.code).text, meta: c.passed ? 'ok' : 'fail', tone: c.passed ? 'ready' : 'critical' })),
     },
     {
-      id: 'pipeline', name: 'Pipeline', tone: 'info',
-      partial: duration(totalMs), hint: `${ticket.latency.length} steps, end to end`,
+      id: 'pipeline', name: 'Speed', tone: 'info',
+      partial: duration(totalMs), hint: `total time across ${ticket.latency.length} steps`,
       rows: ticket.latency.map((s) => ({
         key: s.stage, title: s.stage, text: /draft/i.test(s.stage) && !/check/i.test(s.stage) ? 'Language model, grounded in evidence' : 'Local, no AI call',
         meta: `${s.ms} ms`, tone: s.ms > 500 ? 'review' : 'info', bar: Math.max(2, (s.ms / totalMs) * 100),

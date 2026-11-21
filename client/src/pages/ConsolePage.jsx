@@ -90,7 +90,7 @@ export function ConsolePage() {
       )}
       <IncidentDrawer incidentKey={tracking} onClose={() => setTracking(null)} onOpenTicket={(id) => { setTracking(null); navigate(`/console/${id}`); }} />
       <ChatWidget ticket={ticket.data} suggestions={meta.chatSuggestions} />
-      <CommandPalette open={palette} onClose={() => setPalette(false)} branches={meta.branches} onTriage={triage} />
+      <CommandPalette open={palette} onClose={() => setPalette(false)} onTriage={triage} />
     </AppShell>
   );
 }

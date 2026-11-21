@@ -4,7 +4,6 @@ import { Icon } from '../ui/Icon.jsx';
 import { Dot } from '../ui/Tone.jsx';
 import { ThemeToggle } from '../ui/ThemeToggle.jsx';
 import { AmbientBackground } from './AmbientBackground.jsx';
-import { SUPPORT_URL } from '../../lib/links.js';
 
 /**
  * Sidebar + main area. Pages inject their own sidebar content (e.g. the inbox).
@@ -49,9 +48,7 @@ export function AppShell({ sidebar, onNewTicket, children }) {
           </button>
           <nav className="nav" aria-label="Main">
             <NavLink to="/console"><Icon name="inbox" /> Console</NavLink>
-            <NavLink to="/agent"><Icon name="shield" /> Agent portal</NavLink>
             <NavLink to="/insights"><Icon name="chart" /> Insights</NavLink>
-            <a href={SUPPORT_URL} target="_blank" rel="noreferrer"><Icon name="arrow" /> Customer page ↗</a>
           </nav>
           <div className="scroll" style={{ flex: 1, minHeight: 0, margin: '0 -4px', padding: '0 4px' }} onClick={(e) => { if (e.target.closest('button[aria-current], li button')) setNavOpen(false); }}>
             {sidebar}

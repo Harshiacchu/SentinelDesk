@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { asyncHandler } from '../../core/http.js';
 import { intInRange, oneOf, requireString } from '../../core/validate.js';
-import { TicketService } from './TicketService.js';
 
 export function ticketRoutes({ ticketService, chatService }) {
   const r = Router();
@@ -16,16 +15,16 @@ export function ticketRoutes({ ticketService, chatService }) {
   r.get('/:id', asyncHandler(async (req, res) => res.json(await ticketService.get(req.params.id))));
 
   r.post('/:id/feedback', asyncHandler(async (req, res) => {
-    res.json(TicketService.withoutSecrets(await ticketService.addFeedback(req.params.id, { verdict: req.body?.verdict })));
+    res.json(await ticketService.addFeedback(req.params.id, { verdict: req.body?.verdict }));
   }));
 
   r.post('/:id/notes', asyncHandler(async (req, res) => {
     const text = requireString(req.body?.text, 'text', { max: 1000 });
-    res.status(201).json(TicketService.withoutSecrets(await ticketService.addNote(req.params.id, { text })));
+    res.status(201).json(await ticketService.addNote(req.params.id, { text }));
   }));
 
   r.post('/:id/actions', asyncHandler(async (req, res) => {
-    res.json(TicketService.withoutSecrets(await ticketService.act(req.params.id, { action: req.body?.action })));
+    res.json(await ticketService.act(req.params.id, { action: req.body?.action }));
   }));
 
   r.post('/:id/chat', asyncHandler(async (req, res) => {

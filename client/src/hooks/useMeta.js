@@ -1,7 +1,7 @@
 import { useAsync } from './useAsync.js';
 import { api } from '../api/sentinelApi.js';
 
-const FALLBACK = { branches: ['Boston'], chatSuggestions: [] };
+const FALLBACK = { chatSuggestions: [] };
 
 export function useMeta() {
   const { data } = useAsync(() => api.meta(), []);

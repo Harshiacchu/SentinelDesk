@@ -1,11 +1,6 @@
 import { Icon } from '../../components/ui/Icon.jsx';
 import { Dot } from '../../components/ui/Tone.jsx';
 
-const branchList = (branches) => {
-  const names = Object.entries(branches).sort((a, b) => b[1] - a[1]).map(([n]) => n);
-  return names.length > 3 ? `${names.slice(0, 3).join(', ')} +${names.length - 3}` : names.join(', ');
-};
-
 /** Live strip shown whenever similar incidents cluster into a possible outage. */
 export function OutageBanner({ incidents, onTrack }) {
   if (!incidents?.length) return null;
@@ -22,10 +17,10 @@ export function OutageBanner({ incidents, onTrack }) {
               <Dot tone="critical" pulse /> Possible {inc.topic} outage · {inc.count} similar reports
             </span>
             <span className="muted" style={{ fontSize: 12 }}>
-              {branchList(inc.branches)} · in the last {Math.max(1, inc.pulse.minutesOpen)} min · outage level is {inc.threshold}
+              {inc.count} people reported the same {inc.topic} problem in the last {Math.max(1, inc.pulse.minutesOpen)} min. Probably one outage.
             </span>
           </div>
-          <button className="btn press" onClick={() => onTrack(inc.key)}>Track similar tickets</button>
+          <button className="btn press" onClick={() => onTrack(inc.key)}>See all reports</button>
         </div>
       ))}
     </div>

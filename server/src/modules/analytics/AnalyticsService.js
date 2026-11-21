@@ -1,4 +1,3 @@
-import { BranchSites, Branches } from '../../domain/constants.js';
 import { isIncidentLike } from '../../domain/incident.js';
 
 const pct = (sorted, p) => (sorted.length ? sorted[Math.min(sorted.length - 1, Math.floor(p * sorted.length))] : 0);
@@ -25,10 +24,10 @@ export class AnalyticsService {
       if (buckets[i]) buckets[i][t.severity] += 1;
     }
 
-    const count = (key) => tickets.reduce((m, t) => ((m[key(t)] = (m[key(t)] ?? 0) + 1), m), {});
     const latencies = tickets.map(totalMs).sort((a, b) => a - b);
     const feedback = tickets.flatMap((t) => t.feedback ?? []);
     const right = feedback.filter((f) => f.verdict === 'right').length;
+    const byTopic = tickets.reduce((m, t) => ((m[t.topic] = (m[t.topic] ?? 0) + 1), m), {});
 
     return {
       window: { hours, bucketMin },
@@ -42,41 +41,40 @@ export class AnalyticsService {
         feedbackCount: feedback.length,
       },
       volume: buckets,
-      severity: count((t) => t.severity),
-      queues: Object.entries(count((t) => t.triage.queue.label)).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value),
-      languages: count((t) => t.language),
+      severity: tickets.reduce((m, t) => ((m[t.severity] = (m[t.severity] ?? 0) + 1), m), {}),
+      topics: Object.entries(byTopic).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value),
       reasons: Object.entries(tickets.flatMap((t) => t.reasons).reduce((m, r) => ((m[r] = (m[r] ?? 0) + 1), m), {}))
         .map(([code, value]) => ({ code, value })).sort((a, b) => b.value - a.value),
     };
   }
 
-  /** Branch x topic grid of incidents in the last N minutes. Hot cells = possible outage at that site. */
-  async heatmap({ minutes = 60, now = new Date() } = {}) {
-    const since = new Date(now - minutes * 60_000);
-    const incidents = (await this.repo.findSince(since)).filter(isIncidentLike);
+  /**
+   * Problem type x hour grid of incidents. Hot cells = an hour where one kind of
+   * problem hit the outage level, i.e. probably one outage behind many tickets.
+   */
+  async heatmap({ hours = 6, now = new Date() } = {}) {
+    const start = new Date(now);
+    start.setMinutes(0, 0, 0);
+    start.setHours(start.getHours() - (hours - 1));
+    const incidents = (await this.repo.findSince(start)).filter(isIncidentLike);
     const topics = this.topics.topics.filter((t) => t !== 'Other');
+    const hot = this.detector.minTickets * 2; // per hour: twice the 15-minute outage level
+    const slots = Array.from({ length: hours }, (_, i) => new Date(start.getTime() + i * 3_600_000));
     const cells = {};
     for (const t of incidents) {
-      if (!topics.includes(t.topic)) continue;
-      const k = `${t.branch}|${t.topic}`;
+      const slot = Math.floor((new Date(t.receivedAt) - start) / 3_600_000);
+      if (slot < 0 || slot >= hours || !topics.includes(t.topic)) continue;
+      const k = `${t.topic}|${slot}`;
       cells[k] = (cells[k] ?? 0) + 1;
     }
-    const max = Math.max(1, ...Object.values(cells));
-    const sites = BranchSites.map((site) => {
-      const own = incidents.filter((t) => t.branch === site.name);
-      const byTopic = topics.map((topic) => ({ topic, value: cells[`${site.name}|${topic}`] ?? 0 })).sort((a, b) => b.value - a.value);
-      return { ...site, incidents: own.length, top: byTopic[0].value ? byTopic[0] : null, hot: byTopic[0].value >= this.detector.minTickets };
-    });
     return {
-      sites,
-      minutes,
-      branches: Branches,
+      hours: slots.map((d) => d.toISOString()),
       topics,
-      max,
-      hotThreshold: this.detector.minTickets,
-      cells: Branches.flatMap((branch) => topics.map((topic) => {
-        const value = cells[`${branch}|${topic}`] ?? 0;
-        return { branch, topic, value, hot: value >= this.detector.minTickets };
+      max: Math.max(1, ...Object.values(cells)),
+      hotThreshold: hot,
+      cells: topics.flatMap((topic) => slots.map((_, slot) => {
+        const value = cells[`${topic}|${slot}`] ?? 0;
+        return { topic, slot, value, hot: value >= hot };
       })),
     };
   }
