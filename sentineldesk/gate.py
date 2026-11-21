@@ -194,15 +194,28 @@ def pre(triage: dict, hits: list[dict], text: str, lang: str) -> dict:
             shown = ", ".join(f'"{_short(r, 25)}"' for r in unique[:3])
             reasons.append(_r("RISKY_ASK", f"The customer asks for something only a human can approve or promise ({shown})."))
 
+        top = max((hit_score(h) for h in hits), default=0.0)
+        margin = 1.0
+        queue_probs = (triage.get("queue") or {}).get("probs") or {}
+        if len(queue_probs) >= 2:
+            top2 = sorted(queue_probs.values(), reverse=True)[:2]
+            margin = top2[0] - top2[1]
+
+        strong_precedent = (top >= 0.94) and (margin >= 0.05)
+
+        if lang and lang not in config.LANGUAGES:
+            reasons.append(_r("LOW_CONFIDENCE", f"Unsupported language detected ({lang})."))
+
         if triage.get("error"):
             reasons.append(_r("LOW_CONFIDENCE", f"Triage failed ({_short(str(triage['error']), 60)}), so the labels cannot be trusted."))
-        else:
+        elif not strong_precedent:
             for head in ("type", "queue"):
                 p = _prob(triage.get(head))
                 if p < thr["tau_c"]:
                     reasons.append(_r("LOW_CONFIDENCE", f"The {head} prediction '{_label(triage.get(head)) or 'unknown'}' has only {p:.0%} confidence (minimum {thr['tau_c']:.0%})."))
+            if margin < 0.15:
+                reasons.append(_r("LOW_CONFIDENCE", f"Ambiguous queue routing (margin {margin:.2f} < 0.15 between top candidates)."))
 
-        top = max((hit_score(h) for h in hits), default=0.0)
         if not hits:
             reasons.append(_r("NO_PRECEDENT", "No similar past tickets were found."))
         elif top < thr["tau_s"]:

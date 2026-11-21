@@ -78,7 +78,7 @@ SEVERITY_RAISES_FLAG = True
 # Keyword rules (en + de). They can only ADD caution: a hit sets high_incident_flag.
 SEVERITY_PATTERNS = {
     "outage": r"\b(outage|down|offline|not reachable|unreachable|ausfall|ausgefallen|fällt .{0,20}aus|nicht erreichbar|störung)\b",
-    "security": r"\b(breach|hacked|ransomware|compromised|unauthori[sz]ed access|sicherheitsvorfall|gehackt|kompromittiert)\b",
+    "security": r"\b(breach|hacked|ransomware|compromised|unauthori[sz]ed access|sicherheitsvorfall|sicherheitsverletzung|sicherheitsproblem|datenverletzung|gehackt|kompromittiert)\b",
     "data_loss": r"\b(data loss|lost data|datenverlust|daten verloren)\b",
     "patient_safety": r"\b(patient|patients|patienten|telemedicine|telemedizin|emr|clinic|klinik|krankenhaus|hospital)\b",
 }
