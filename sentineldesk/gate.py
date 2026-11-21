@@ -172,14 +172,16 @@ def pre(triage: dict, hits: list[dict], text: str, lang: str) -> dict:
 
         prob = triage.get("high_incident_prob")
         flags = [str(f) for f in (triage.get("severity_flags") or [])]
+        # The brief's rule, literally: predicted priority "high" AND predicted type "Incident" always escalates.
+        literal = _label(triage.get("priority")).lower() == "high" and _label(triage.get("type")).lower() == "incident"
         if "high_incident_flag" in triage:  # P2 already applied its tuned threshold and the severity rules
-            fire = bool(triage["high_incident_flag"])
+            fire = bool(triage["high_incident_flag"]) or literal
         else:
-            fire = (prob is not None and float(prob) >= thr["t_high_incident"]) or bool(flags) or (
-                prob is None and _label(triage.get("priority")).lower() == "high"
-                and _label(triage.get("type")).lower() == "incident")
+            fire = (prob is not None and float(prob) >= thr["t_high_incident"]) or bool(flags) or literal
         if fire:
             parts = []
+            if literal:
+                parts.append("predicted as a high-priority Incident")
             if prob is not None:
                 parts.append(f"high-priority incident probability {float(prob):.2f}")
             if flags:

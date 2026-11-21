@@ -889,3 +889,16 @@ def test_reply_with_a_masked_token_is_rejected(monkeypatch):
     for token in ("[PHONE]", "[NAME]", "[EMAIL]", "[ACCOUNT]"):
         res = gate.post(good_draft(reply=f"Hello, please contact {token} [TKT-00011]."), HITS, "en", "x")
         assert "LLM_ERROR" in codes(res) and "placeholder" in res["reasons"][0]["detail"], token
+
+
+def test_a_ticket_predicted_high_priority_incident_always_escalates():
+    """The brief: escalate when priority == high AND type == Incident, whatever the probability head says."""
+    t = triage(type_="Incident", prio="high", head=0.01)  # head probability far below any threshold
+    t["high_incident_flag"] = False
+    res = gate.pre(t, HITS, "Some ordinary looking text", "en")
+    assert res["status"] == gate.ESCALATE and "HIGH_INCIDENT" in codes(res)
+    assert "predicted as a high-priority Incident" in res["reasons"][0]["detail"]
+    for type_, prio in (("Incident", "medium"), ("Request", "high"), ("Problem", "high")):  # only the combination counts
+        t2 = triage(type_=type_, prio=prio, head=0.01)
+        t2["high_incident_flag"] = False
+        assert "HIGH_INCIDENT" not in codes(gate.pre(t2, HITS, "Some ordinary looking text", "en"))
