@@ -46,7 +46,8 @@ export class PipelineResultMapper {
         ticketId: h.ticket_id, similarity: Number(h.score?.toFixed?.(2) ?? h.score), subject: h.subject,
         snippet: h.answer_snippet ?? (h.answer ?? '').slice(0, 240), language: h.language, cited: cited.has(h.ticket_id),
       })),
-      draft: r.draft?.reply ? { language: r.lang?.lang ?? 'en', lines: PipelineResultMapper.#lines(r.draft.reply, ids) } : null,
+      // A draft is shown only if the gate approved it (status auto_draft).
+      draft: r.gate?.status === 'auto_draft' && r.draft?.reply ? { language: r.lang?.lang ?? 'en', lines: PipelineResultMapper.#lines(r.draft.reply, ids) } : null,
       latency: Object.entries(r.timings_ms ?? {}).filter(([k]) => k !== 'total').map(([k, ms]) => ({ stage: STAGE_NAMES[k] ?? k, ms: Math.round(ms) })),
     };
   }

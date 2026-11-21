@@ -2,10 +2,11 @@
 import re
 
 _PATTERNS = [
-    ("EMAIL", re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")),
+    # Bounded quantifiers: linear time even on one 50,000-character token (the unbounded form was quadratic).
+    ("EMAIL", re.compile(r"[\w.+-]{1,64}@[\w-]{1,63}(?:\.[\w-]{1,63}){1,8}")),
     ("IBAN", re.compile(r"\b[A-Z]{2}\d{2}(?:\s?[A-Z0-9]{4}){3,7}\b")),
     ("IP", re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")),
-    ("PHONE", re.compile(r"(?<!\w)\+?\d[\d\s().-]{7,}\d")),
+    ("PHONE", re.compile(r"(?<!\w)\+?\d[\d\s().-]{7,20}\d")),
     # TODO(P4): IPv6, account / customer numbers
 ]
 

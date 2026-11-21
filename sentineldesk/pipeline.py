@@ -177,7 +177,8 @@ def run(subject=None, body: str | None = None, ticket_id: str | None = None) -> 
         "triage": tri,
         "hits": hits,
         "gate": final,
-        "draft": reply,
+        # Only a validated draft leaves the pipeline: if the gate escalated, nothing is shown to anyone.
+        "draft": reply if final["status"] == gate.AUTO else None,
         "burst": burst_out,
         "timings_ms": timer.total(),
         "errors": errors,

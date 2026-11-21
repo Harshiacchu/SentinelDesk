@@ -53,7 +53,7 @@ export class TriageService {
       });
       await this.repository.update(id, {
         incidentKey: updated.incidentKey, decision: updated.decision, reasons: updated.reasons,
-        severity: updated.severity, severityRank: updated.severityRank, headline: updated.headline,
+        severity: updated.severity, severityRank: updated.severityRank, headline: updated.headline, draft: null,
       });
     }
   }

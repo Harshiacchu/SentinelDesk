@@ -27,7 +27,7 @@ ESCALATE = "escalate"
 LABELS = {AUTO: "Auto-Draft Ready", ESCALATE: "Escalate to On-Call Engineer"}  # for the UI
 
 _THRESHOLDS_FILE = Path(__file__).resolve().parent.parent / "config" / "thresholds.json"
-_file_cache: dict = {"mtime": None, "data": {}}
+_file_cache: dict = {"key": None, "mtime": None, "data": {}}
 
 
 def thresholds() -> dict:
@@ -39,9 +39,10 @@ def thresholds() -> dict:
     }
     try:
         mtime = _THRESHOLDS_FILE.stat().st_mtime
-        if _file_cache["mtime"] != mtime:
+        key = (str(_THRESHOLDS_FILE), mtime)  # path + mtime, so a cache from another file is never reused
+        if _file_cache.get("key") != key:
             _file_cache["data"] = json.loads(_THRESHOLDS_FILE.read_text(encoding="utf-8"))
-            _file_cache["mtime"] = mtime
+            _file_cache["key"], _file_cache["mtime"] = key, mtime
         for key in out:
             val = _file_cache["data"].get(key)
             if isinstance(val, (int, float)) and not isinstance(val, bool):

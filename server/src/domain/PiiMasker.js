@@ -4,12 +4,13 @@
  * Order matters: specific patterns (IBAN, card, IP) run before the broad phone pattern.
  */
 const RULES = [
-  ['EMAIL', /[\w.+-]+@[\w-]+\.[\w.-]+/g],
+  // Bounded quantifiers keep every pattern linear-time on long unbroken text (no catastrophic backtracking).
+  ['EMAIL', /[\w.+-]{1,64}@[\w-]{1,63}(?:\.[\w-]{1,63}){1,8}/g],
   ['IBAN', /\b[A-Z]{2}\d{2}(?:\s?[A-Z0-9]{4}){3,7}(?:\s?[A-Z0-9]{1,3})?\b/g],
   ['IP', /\b(?:\d{1,3}\.){3}\d{1,3}\b|\b(?:[0-9a-f]{1,4}:){7}[0-9a-f]{1,4}\b/gi],
   ['CARD', /\b\d{4}([ -]?)\d{4}\1\d{4}\1\d{1,4}\b/g], // 4-4-4-4 layout, so phone numbers don't match
-  ['ACCOUNT', /\b(?:account|acct|konto|kundennummer|customer (?:no|number|id))[\s#:.-]*\d{4,}\b/gi],
-  ['PHONE', /(?<![\w[])(?!\d{4}-\d{2}-\d{2}\b|\d{1,2}[./]\d{1,2}[./]\d{2,4}\b)(?:\(\d{2,4}\)\s?|\+)?\d[\d\s().-]{6,}\d\b/g], // dates are not phones
+  ['ACCOUNT', /\b(?:account|acct|konto|kundennummer|customer (?:no|number|id))[\s#:.-]{0,5}\d{4,20}\b/gi],
+  ['PHONE', /(?<![\w[])(?!\d{4}-\d{2}-\d{2}\b|\d{1,2}[./]\d{1,2}[./]\d{2,4}\b)(?:\(\d{2,4}\)\s?|\+)?\d[\d\s().-]{6,20}\d\b/g], // dates are not phones
 ];
 
 const LABELS = { EMAIL: 'email', PHONE: 'phone number', IP: 'IP address', IBAN: 'IBAN', CARD: 'card number', ACCOUNT: 'account number' };

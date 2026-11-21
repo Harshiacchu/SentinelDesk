@@ -34,6 +34,8 @@ export class TicketFactory {
   /** Recomputes the derived fields after reasons/decision change (e.g. a burst was detected). */
   static withSeverity(record) {
     const sev = severityFor(record.decision, record.reasons);
-    return { ...record, severity: sev.level, severityRank: sev.rank, headline: headlineFor(sev.level) };
+    // Escalated tickets never carry a draft: a reply is shown only when it passed every check.
+    const draft = record.decision === 'AUTO_DRAFT' ? record.draft : null;
+    return { ...record, draft, severity: sev.level, severityRank: sev.rank, headline: headlineFor(sev.level) };
   }
 }

@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { Icon } from '../../components/ui/Icon.jsx';
 import { Dot } from '../../components/ui/Tone.jsx';
 
+/** Checks that run on a written draft (CONTRACT.md section 6, post stage). */
+const POST_CHECKS = new Set(['NOT_FOUND', 'BAD_CITATION', 'UNSUPPORTED_NUMBER', 'LANG_MISMATCH', 'REFUSAL']);
+
 /**
  * The draft with the Evidence Lens: every sentence shows where it came from,
  * unsupported promises are struck out, and clicking a sentence highlights its source.
@@ -16,8 +19,10 @@ export function ReplyPanel({ ticket }) {
         <h2 className="card-title">No customer draft</h2>
         <p className="muted" style={{ margin: 0, lineHeight: 1.6 }}>
           {ticket.reasons.includes('LLM_ERROR')
-            ? 'The drafting model was unavailable, so this goes to a person. The past tickets are under Evidence.'
-            : 'The safety gate stopped this before drafting, so nothing was written to the customer. A person handles it, with the past tickets under Evidence.'}
+            ? 'The drafting model was unavailable, so this goes to an engineer. The past tickets are under Evidence.'
+            : ticket.reasons.some((r) => POST_CHECKS.has(r))
+              ? 'A draft was written but failed the safety checks, so it is not shown. An engineer takes over; see Why for what failed.'
+              : 'The safety gate stopped this before drafting, so no reply was written. An engineer takes over, with the past tickets under Evidence.'}
         </p>
       </section>
     );
