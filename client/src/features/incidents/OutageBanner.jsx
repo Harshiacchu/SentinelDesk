@@ -14,7 +14,7 @@ export function OutageBanner({ incidents, onTrack }) {
           </span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0, flex: '1 1 300px' }}>
             <span style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Dot tone="critical" pulse /> Possible {inc.topic} outage · {inc.count} similar reports
+              <Dot tone="critical" pulse /> Major Incident: possible {inc.topic} outage · {inc.count} similar reports
             </span>
             <span className="muted" style={{ fontSize: 12 }}>
               {inc.count} people reported the same {inc.topic} problem in the last {Math.max(1, inc.pulse.minutesOpen)} min. Probably one outage.
