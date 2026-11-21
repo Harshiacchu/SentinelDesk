@@ -8,10 +8,11 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-try:  # load .env so GEMINI_API_KEY etc. reach draft.py, which reads os.environ directly
+try:  # main's config.py loaded .env (the API key for P4); P1's rewrite dropped it
     from dotenv import load_dotenv
+
     load_dotenv()
-except ImportError:  # python-dotenv is in requirements.txt; tolerate its absence in bare test envs
+except ImportError:  # python-dotenv is in requirements.txt; tolerate its absence in test envs
     pass
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -75,9 +76,17 @@ LLM_MODEL = os.getenv("SENTINEL_LLM_MODEL", "claude-opus-5-5")
 RESULTS_DIR = ROOT / "results"
 USE_MOCKS = os.getenv("SENTINEL_USE_MOCKS") == "1"
 
-# --- Retrieval + burst (P3) and paths still used by scaffold modules (P5) --------
+# --- Names restored from main's config.py (added by P2's integration branch) ----------
+# P1's rewrite removed these, but other modules still read them (gate, burst, retrieve,
+# triage and the P2 scripts all failed at import without them). Values are main's.
+DATA_PROCESSED = PROCESSED_DIR                     # alias of P1's PROCESSED_DIR
+MODELS_DIR = ARTIFACTS_DIR / "models"
+EMB_DIR = ARTIFACTS_DIR  # P2's scripts write kb_emb.npy and test_emb.npy here = P1's KB_EMB_PATH / TEST_EMB_PATH
 TOP_K = 5
-EMB_DIR = ARTIFACTS_DIR / "embeddings"   # scripts/build_index.py
-BURST_WINDOW_MIN = 15                    # burst.py: N similar tickets within T minutes
+MIN_CLASSIFIER_CONF = 0.55  # placeholders: P4's gate, to be tuned on val
+MIN_RETRIEVAL_SIM = 0.80
+BURST_WINDOW_MIN = 15
 BURST_MIN_TICKETS = 3
 BURST_SIM = 0.85
+# Not restored on purpose: TEST_PATH. P1 removed it so that only data.py and evaluate.py
+# can reach the test labels (evaluate.py's leakage check).
