@@ -18,6 +18,8 @@ def main() -> None:
         kb_emb = np.load(emb_path)
     else:
         texts = [ticket_text({"subject": s, "body": b}) for s, b in zip(kb["subject"], kb["body"])]
+        # TODO(P2): the e5 model card says use "query: " for symmetric similarity (ticket vs ticket)
+        # and for classifier features, so KB and live tickets should probably share kind="query".
         kb_emb = embed.encode(texts, kind="passage")
         np.save(emb_path, kb_emb)
     print(f"KB embeddings: {kb_emb.shape}")

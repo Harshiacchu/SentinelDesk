@@ -8,7 +8,9 @@ from .contracts import Case, Ticket
 
 def build_index(kb_df, kb_emb) -> None:
     """TODO(P3): faiss.IndexFlatIP on normalised kb_emb; save the index plus
-    metadata (ticket_id, subject, body, answer, language) to artifacts/index/."""
+    metadata (ticket_id, subject, body, answer, language) to artifacts/index/.
+    TODO(P3): when tuning MIN_RETRIEVAL_SIM on validation tickets, drop each ticket's own ID
+    from its results (it is in the index and would score 1.0). e5 cosines sit around 0.7-1.0."""
     raise NotImplementedError
 
 
