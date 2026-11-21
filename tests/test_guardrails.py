@@ -60,12 +60,12 @@ def test_precedent_rescue_on_borderline_queue_confidence():
     ticket = {"subject": "Password Reset", "body": "Forgot password"}
     # Borderline queue confidence (0.50) without strong precedent (<0.94) escalates
     cases_normal = [{"ticket_id": "TKT-00001", "similarity": 0.90, "subject": "", "body": "", "answer": "", "language": "en"}]
-    res_borderline = gate.decide(ticket, _triage(conf=0.50), cases_normal)
+    res_borderline = gate.decide(ticket, _triage(conf=0.45), cases_normal)
     assert res_borderline["decision"] == "ESCALATE"
 
     # Borderline queue confidence (0.50) with strong precedent (>=0.94) is rescued and auto-drafts
     cases_strong = [{"ticket_id": "TKT-00001", "similarity": 0.96, "subject": "", "body": "", "answer": "", "language": "en"}]
-    res_rescued = gate.decide(ticket, _triage(conf=0.50), cases_strong)
+    res_rescued = gate.decide(ticket, _triage(conf=0.45), cases_strong)
     assert res_rescued["decision"] == "AUTO_DRAFT"
 
 

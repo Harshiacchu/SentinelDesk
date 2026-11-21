@@ -19,11 +19,11 @@ from __future__ import annotations
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
 
-K_GRID = (5, 10, 20)       # k >= 5 keeps the vote soft, so it carries a usable confidence
+K_GRID = (5, 10, 15, 20, 30, 40)       # k >= 5 keeps the vote soft, so it carries a usable confidence
 # Each neighbour's vote weight is similarity ** power. e5 top-1 similarities sit in a narrow
 # band (10th to 90th percentile 0.94 to 0.995 on cal), so a power of 4 to 20 barely separates
 # neighbours; the best powers on cal were 100 to 200.
-POWER_GRID = (4, 10, 20, 50, 100, 200, 400)
+POWER_GRID = (10, 20, 50, 100, 150, 200, 300, 400)
 
 
 def top_neighbours(queries: np.ndarray, pool: np.ndarray, k: int, chunk: int = 512):
