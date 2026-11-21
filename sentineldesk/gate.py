@@ -219,7 +219,7 @@ def pre(triage: dict, hits: list[dict], text: str, lang: str) -> dict:
         if not hits:
             reasons.append(_r("NO_PRECEDENT", "No similar past tickets were found."))
         elif top < thr["tau_s"]:
-            reasons.append(_r("NO_PRECEDENT", f"The closest past ticket matches only {top:.2f} (minimum {thr['tau_s']:.2f})."))
+            reasons.append(_r("NO_PRECEDENT", f"The closest past ticket matches only {top:.3f} (minimum {thr['tau_s']:.3f})."))
 
         return _result(reasons)
     except Exception as e:
@@ -323,7 +323,7 @@ def unsupported_offers(reply: str, cited_answers: str) -> list[str]:
 
 
 # Template placeholders copied from dataset answers ("Dear <name>, call <tel_num>").
-_PLACEHOLDER = re.compile(r"<[A-Za-z_]+>|\[Your Name\]|\[Ihr Name\]")
+_PLACEHOLDER = re.compile(r"<[A-Za-z_]+>|\[Your Name\]|\[Ihr Name\]|\[(?:NAME|EMAIL|PHONE|IP|IBAN|CARD|ACCOUNT)\]")
 _LANG_NAME = {"en": "English", "de": "German"}
 
 
