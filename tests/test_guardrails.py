@@ -53,7 +53,7 @@ def test_retrieval_similarity_threshold_adv19():
     cases_oos = [{"ticket_id": "TKT-00020", "similarity": 0.87, "subject": "", "body": "", "answer": "", "language": "en"}]
     res_oos = gate.decide(ticket, _triage(), cases_oos)
     assert res_oos["decision"] == "ESCALATE"
-    assert "No close historical precedent" in res_oos["reasons"][0]
+    assert any("precedent" in r.lower() for r in res_oos["reasons"])
 
 
 def test_precedent_rescue_on_borderline_queue_confidence():

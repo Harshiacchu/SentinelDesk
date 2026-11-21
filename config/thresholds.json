@@ -1,4 +1,5 @@
 {
   "t_high_incident": 0.19,
-  "tau_c": 0.55
+  "tau_c": 0.55,
+  "tau_s": 0.88
 }
